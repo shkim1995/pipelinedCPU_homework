@@ -1,0 +1,532 @@
+Vivado Simulator 2016.4
+Time resolution is 1 ps
+inst at ctrl module : xxxx
+num_inst :     0
+ALUsrc1 : 0
+ALUsrc2 : 0
+ALU_out : 0000
+RF changed : 0000, 0000, 0000, 0000
+
+-----------------------------------
+
+pc_out : 0022
+EX_ALUsrc : 0
+ALU_out : xxxx
+
+-----------------------------------
+
+pc_out : 0023
+
+-----------------------------------
+
+pc_out : 0024
+inst at ctrl module : 6000
+ctrl : LHI
+
+-----------------------------------
+
+pc_out : 0025
+EX_ALUsrc : 1
+inst at ctrl module : f01c
+ctrl : WWD
+ALU_in1 : 0000
+ALU_in2 : 0000
+ALU_out : 0000
+
+-----------------------------------
+
+pc_out : 0026
+inst at ctrl module : 6100
+ctrl : LHI
+ALU_in2 : 001c
+output_port : 0000
+ALUsrc1 : 2
+ALUsrc2 : 2
+ALU_out : 1c00
+
+-----------------------------------
+
+pc_out : 0027
+inst at ctrl module : f41c
+ctrl : WWD
+ALU_in2 : 0000
+ALU_in1 : 1c00
+ALUsrc1 : 3
+ALUsrc2 : 0
+ALU_out : 0000
+ALU_in1 : 0000
+
+-----------------------------------
+
+pc_out : 0028
+inst at ctrl module : 6200
+ctrl : LHI
+ALU_in2 : 001c
+ALU_in1 : 1c00
+ALUsrc1 : 2
+ALU_out : 1c00
+ALU_in1 : 0000
+
+-----------------------------------
+
+pc_out : 0029
+inst at ctrl module : f81c
+ctrl : WWD
+ALU_in2 : 0000
+ALU_in1 : 1c00
+ALUsrc1 : 0
+ALU_out : 0000
+ALU_in1 : 0000
+
+-----------------------------------
+
+pc_out : 002a
+inst at ctrl module : 6300
+ctrl : LHI
+ALU_in2 : 001c
+ALUsrc1 : 2
+ALU_out : 1c00
+
+-----------------------------------
+
+pc_out : 002b
+inst at ctrl module : fc1c
+ctrl : WWD
+ALU_in2 : 0000
+ALU_in1 : 1c00
+ALUsrc1 : 0
+ALU_out : 0000
+ALU_in1 : 0000
+
+-----------------------------------
+
+pc_out : 002c
+inst at ctrl module : 4401
+ctrl : ADI
+ALU_in2 : 001c
+ALUsrc1 : 2
+ALU_out : 1c00
+
+-----------------------------------
+
+pc_out : 002d
+inst at ctrl module : f01c
+ctrl : WWD
+ALU_in2 : 0001
+ALU_in1 : 1c00
+ALU_out : 1c01
+ALUsrc1 : 0
+ALU_in1 : 0000
+ALU_out : 0001
+
+-----------------------------------
+
+pc_out : 002e
+inst at ctrl module : 4001
+ctrl : ADI
+ALU_in2 : 001c
+ALU_out : 001c
+ALUsrc1 : 2
+ALUsrc2 : 2
+ALU_in1 : 0001
+ALU_out : 001d
+
+-----------------------------------
+
+pc_out : 002f
+inst at ctrl module : f01c
+ctrl : WWD
+ALU_in2 : 0001
+ALU_in1 : 001d
+ALU_out : 001e
+ALUsrc1 : 3
+ALUsrc2 : 3
+ALU_in1 : 0001
+ALU_out : 0002
+RF changed : 0001, 0000, 0000, 0000
+
+-----------------------------------
+
+pc_out : 0030
+inst at ctrl module : 5901
+ctrl : ORI
+ALU_in2 : 001c
+ALU_in1 : 001d
+ALU_out : 0039
+output_port : 0001
+ALUsrc1 : 2
+ALUsrc2 : 2
+ALU_in1 : 0002
+ALU_out : 001e
+
+-----------------------------------
+
+pc_out : 0031
+inst at ctrl module : f41c
+ctrl : WWD
+ALU_in1 : 001e
+ALU_in2 : 0001
+ALUsrc1 : 0
+ALUsrc2 : 0
+ALU_out : 001f
+ALU_in1 : 0000
+ALU_out : 0001
+RF changed : 0002, 0000, 0000, 0000
+
+-----------------------------------
+
+pc_out : 0032
+inst at ctrl module : 5502
+ctrl : ORI
+ALU_in2 : 001c
+output_port : 0000
+ALUsrc1 : 2
+ALU_out : 001c
+ALU_in1 : 0001
+ALU_out : 001d
+
+-----------------------------------
+
+pc_out : 0033
+inst at ctrl module : f41c
+ctrl : WWD
+ALU_in2 : 0002
+ALU_in1 : 001d
+ALUsrc1 : 3
+ALUsrc2 : 3
+ALU_out : 001f
+ALU_in1 : 0001
+ALU_out : 0003
+RF changed : 0002, 0001, 0000, 0000
+
+-----------------------------------
+
+pc_out : 0034
+inst at ctrl module : 5503
+ctrl : ORI
+ALU_in2 : 001c
+ALU_in1 : 001d
+output_port : 0001
+ALUsrc1 : 2
+ALUsrc2 : 0
+ALU_out : 001d
+ALU_in1 : 0003
+ALU_out : 001f
+
+-----------------------------------
+
+pc_out : 0035
+inst at ctrl module : f41c
+ctrl : WWD
+ALU_in2 : 0003
+ALU_in1 : 001f
+ALUsrc1 : 3
+ALUsrc2 : 3
+ALU_in1 : 0003
+ALU_out : 0003
+RF changed : 0002, 0003, 0000, 0000
+
+-----------------------------------
+
+pc_out : 0036
+inst at ctrl module : f2c0
+ctrl : ADD
+ALU_in2 : 001c
+ALU_in1 : 001f
+output_port : 0003
+ALUsrc1 : 2
+ALUsrc2 : 0
+ALU_out : 001f
+ALU_in1 : 0003
+
+-----------------------------------
+
+pc_out : 0037
+EX_ALUsrc : 0
+inst at ctrl module : fc1c
+ctrl : WWD
+ALU_in1 : 001f
+ALU_in2 : 0000
+ALUsrc1 : 0
+ALU_in1 : 0002
+ALU_out : 0002
+
+-----------------------------------
+
+pc_out : 0038
+inst at ctrl module : f6c0
+ctrl : ADD
+ALU_in1 : 0000
+ALU_in2 : 0002
+output_port : 0002
+ALUsrc1 : 2
+ALU_in1 : 0002
+ALU_out : 0004
+
+-----------------------------------
+
+pc_out : 0039
+inst at ctrl module : fc1c
+ctrl : WWD
+ALU_in1 : 0004
+ALU_in2 : 0000
+ALUsrc1 : 0
+ALU_in1 : 0003
+ALU_out : 0003
+RF changed : 0002, 0003, 0000, 0002
+
+-----------------------------------
+
+pc_out : 003a
+inst at ctrl module : f1c0
+ctrl : ADD
+ALU_in1 : 0002
+ALU_in2 : 0002
+ALU_out : 0004
+output_port : 0003
+ALUsrc1 : 2
+ALU_in1 : 0003
+ALU_out : 0005
+
+-----------------------------------
+
+pc_out : 003b
+inst at ctrl module : fc1c
+ctrl : WWD
+ALU_in2 : 0003
+ALU_in1 : 0005
+ALU_out : 0008
+ALUsrc1 : 0
+ALU_in1 : 0002
+ALU_out : 0005
+RF changed : 0002, 0003, 0000, 0003
+
+-----------------------------------
+
+pc_out : 003c
+inst at ctrl module : f2c1
+ctrl : SUB
+ALU_in1 : 0003
+ALU_in2 : 0002
+output_port : 0002
+ALUsrc1 : 2
+ALU_in1 : 0005
+ALU_out : 0007
+
+-----------------------------------
+
+pc_out : 003d
+inst at ctrl module : fc1c
+ctrl : WWD
+ALU_in1 : 0007
+ALU_in2 : 0000
+ALUsrc1 : 0
+ALU_in1 : 0002
+ALU_out : 0002
+RF changed : 0002, 0003, 0000, 0005
+
+-----------------------------------
+
+pc_out : 003e
+inst at ctrl module : f8c1
+ctrl : SUB
+ALU_in1 : 0005
+ALU_in2 : 0002
+ALU_out : 0003
+ALUsrc1 : 2
+ALU_in1 : 0002
+ALU_out : 0000
+
+-----------------------------------
+
+pc_out : 003f
+inst at ctrl module : fc1c
+ctrl : WWD
+ALU_in1 : 0000
+ALU_out : fffe
+ALUsrc1 : 0
+RF changed : 0002, 0003, 0000, 0002
+
+-----------------------------------
+
+pc_out : 0040
+inst at ctrl module : f6c1
+ctrl : SUB
+ALU_in1 : 0002
+ALU_out : 0000
+output_port : 0000
+ALUsrc1 : 2
+ALU_in1 : fffe
+ALU_out : fffc
+
+-----------------------------------
+
+pc_out : 0041
+inst at ctrl module : fc1c
+ctrl : WWD
+ALU_in1 : fffc
+ALU_in2 : 0000
+ALUsrc1 : 0
+ALU_in1 : 0003
+ALU_out : 0003
+RF changed : 0002, 0003, 0000, fffe
+
+-----------------------------------
+
+pc_out : 0042
+inst at ctrl module : f9c1
+ctrl : SUB
+ALU_in1 : fffe
+ALU_in2 : 0002
+ALU_out : fffc
+output_port : 0003
+ALUsrc1 : 2
+ALU_in1 : 0003
+ALU_out : 0001
+
+-----------------------------------
+
+pc_out : 0043
+inst at ctrl module : fc1c
+ctrl : WWD
+ALU_in1 : 0001
+ALU_in2 : 0003
+ALU_out : fffe
+ALUsrc1 : 0
+ALU_in1 : 0000
+ALU_out : fffd
+RF changed : 0002, 0003, 0000, 0003
+
+-----------------------------------
+
+pc_out : 0044
+inst at ctrl module : f1c1
+ctrl : SUB
+ALU_in1 : 0003
+ALU_in2 : 0002
+ALU_out : 0001
+output_port : 0000
+ALUsrc1 : 2
+ALU_in1 : fffd
+ALU_out : fffb
+
+-----------------------------------
+
+pc_out : 0045
+inst at ctrl module : fc1c
+ctrl : WWD
+ALU_in1 : fffb
+ALU_in2 : 0003
+ALU_out : fff8
+ALUsrc1 : 0
+ALU_in1 : 0002
+ALU_out : ffff
+RF changed : 0002, 0003, 0000, fffd
+
+-----------------------------------
+
+pc_out : 0046
+inst at ctrl module : f4c1
+ctrl : SUB
+ALU_in1 : fffd
+ALU_in2 : 0002
+ALU_out : fffb
+output_port : 0002
+ALUsrc1 : 2
+ALU_in1 : ffff
+ALU_out : fffd
+
+-----------------------------------
+
+pc_out : 0047
+inst at ctrl module : fc1c
+ctrl : WWD
+ALU_in1 : fffd
+ALU_out : fffb
+ALUsrc1 : 0
+ALU_in1 : 0003
+ALU_out : 0001
+RF changed : 0002, 0003, 0000, ffff
+
+-----------------------------------
+
+pc_out : 0048
+inst at ctrl module : f2c2
+ctrl : AND
+ALU_in1 : ffff
+ALU_out : fffd
+output_port : 0003
+ALUsrc1 : 2
+ALU_in1 : 0001
+ALU_out : ffff
+
+-----------------------------------
+
+pc_out : 0049
+inst at ctrl module : fc1c
+ctrl : WWD
+ALU_in1 : ffff
+ALU_in2 : 0000
+ALUsrc1 : 0
+ALU_out : 0000
+ALU_in1 : 0002
+RF changed : 0002, 0003, 0000, 0001
+
+-----------------------------------
+
+pc_out : 004a
+inst at ctrl module : f6c2
+ctrl : AND
+ALU_in1 : 0001
+ALU_in2 : 0002
+output_port : 0002
+ALUsrc1 : 2
+ALU_in1 : 0000
+
+-----------------------------------
+
+pc_out : 004b
+inst at ctrl module : fc1c
+ctrl : WWD
+ALU_in2 : 0000
+ALUsrc1 : 0
+ALU_in1 : 0003
+RF changed : 0002, 0003, 0000, 0000
+
+-----------------------------------
+
+pc_out : 004c
+inst at ctrl module : f1c2
+ctrl : AND
+ALU_in1 : 0000
+ALU_in2 : 0002
+output_port : 0003
+ALUsrc1 : 2
+
+-----------------------------------
+
+pc_out : 004d
+inst at ctrl module : fc1c
+ctrl : WWD
+ALU_in2 : 0003
+ALUsrc1 : 0
+ALU_in1 : 0002
+ALU_out : 0002
+
+-----------------------------------
+
+pc_out : 004e
+inst at ctrl module : f2c3
+ctrl : ORR
+ALU_in1 : 0000
+ALU_in2 : 0002
+output_port : 0002
+ALUsrc1 : 2
+ALU_out : 0000
+ALU_in1 : 0002
+ALU_out : 0002
+
+-----------------------------------
+
+pc_out : 004f
+inst at ctrl module : fc1c
