@@ -26,9 +26,48 @@ module cpu_TB();
 	wire [`WORD_SIZE-1:0] output_port;	// this will be used for a "WWD" instruction
 	wire is_halted;				// set if the cpu is halted
 
-	// instantiate the unit under test
-	cpu UUT (clk, reset_n, i_readM, i_writeM, i_address, i_data, d_readM, d_writeM, d_address, d_data, num_inst, output_port, is_halted);
-	Memory NUUT(!clk, reset_n, i_readM, i_writeM, i_address, i_data, d_readM, d_writeM, d_address, d_data);		   
+
+    //for debugging
+    
+    wire[15:0] pc_out;
+    wire[15:0] IFID_inst_out;
+    wire[15:0] ALU_in1;
+    wire[15:0] ALU_in2;
+    wire[15:0] ALU_out;
+    wire[15:0] dmem_rdata;
+    wire[15:0] RF_wData;
+    wire[15:0] d_outputData;
+    wire[15:0] MEMWB_rdata_in;
+    wire[15:0] MEMWB_rdata_out;
+    
+   
+	cpu UUT (.Clk(clk), 
+	         .Reset_N(reset_n), 
+	         .i_readM(i_readM), 
+	         .i_writeM(i_writeM), 
+	         .i_address(i_address), 
+	         .i_data(i_data), 
+	         .d_readM(d_readM), 
+	         .d_writeM(d_writeM), 
+	         .d_address(d_address), 
+	         .d_data(d_data), 
+	         .num_inst(num_inst), 
+	         .output_port(output_port), 
+	         .is_halted(is_halted),
+	//for debugging
+            .pc_out(pc_out),
+            .IFID_inst_out(IFID_inst_out),
+            .ALU_in1(ALU_in1),
+            .ALU_in2(ALU_in2),
+            .ALU_out(ALU_out),
+            .dmem_rdata(dmem_rdata),
+            .RF_wData(RF_wData),
+            .MEMWB_rdata_in(MEMWB_rdata_in),
+            .MEMWB_rdata_out(MEMWB_rdata_out)
+	);
+	
+	
+	Memory NUUT(!clk, reset_n, i_readM, i_writeM, i_address, i_data, d_readM, d_writeM, d_address, d_data, d_outputData);		   
 
 	// initialize inputs
 	initial begin
@@ -118,7 +157,7 @@ module cpu_TB();
 				if (num_inst == TestNumInst[i]) begin
 					if (output_port == TestAns[i]) begin
 						TestPassed[i] = 1'b1;
-						$display("Test #%s has been failed!", TestID[i]);
+						$display("Test #%s has been Passed!", TestID[i]);
 						$display("output_port = 0x%0x (Ans : 0x%0x)", output_port, TestAns[i]);
 					end
 					else begin

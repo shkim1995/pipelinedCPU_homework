@@ -21,11 +21,34 @@ module cpu(
 
         output [`WORD_SIZE-1:0] num_inst, 
         output [`WORD_SIZE-1:0] output_port, 
-        output is_halted
+        output is_halted,
+        
+        
+        ///for debugiging
+        output[15:0] pc_out,
+        output[15:0] IFID_inst_out,
+        output[15:0] ALU_in1,
+        output[15:0] ALU_in2,
+        output[15:0] ALU_out,
+        output[15:0] dmem_rdata,
+        output[15:0] RF_wData,
+        output[15:0] MEMWB_rdata_in,
+        output[15:0] MEMWB_rdata_out
 );
 
+    //for debugging
+    wire[15:0] pc_out;
+    wire[15:0] IFID_inst_out;
+    wire[15:0] ALU_in1;
+    wire[15:0] ALU_in2;
+    wire[15:0] ALU_out;
+    wire[15:0] dmem_rdata;
+    wire[15:0] RF_wData;
+    wire[15:0] MEMWB_rdata_in;
+    wire[15:0] MEMWB_rdata_out;
+
     reg[`WORD_SIZE-1:0] num_inst;
-    reg [`WORD_SIZE-1:0] output_port;
+    wire[`WORD_SIZE-1:0] output_port;
     wire[`WORD_SIZE-1:0] to_output_port;
     initial begin num_inst<=0; end
     
@@ -39,6 +62,8 @@ module cpu(
     wire MemtoReg;
     wire RegWrite;
     wire[3:0] Alucode;
+    wire Jump;
+    wire Branch;
     
     //num_inst
     wire ID_isFetched;
@@ -46,30 +71,24 @@ module cpu(
     wire ID_WWD;
     wire EX_WWD;
     
-//    always @(ID_WWD) $display("ID_WWD : %b", ID_WWD);
-//    always @(EX_WWD) $display("EX_WWD : %b", EX_WWD);
+    //WWD, num_inst logic
     
-    latch1 isFetched(1, 0, Clk, ID_isFetched, EX_idFetched); 
+    initial num_inst <= 1;
+    
+    latch1 isFetched(1, 0, Clk, ID_isFetched, EX_isFetched); 
     latch1 WWD(1, 0, Clk, ID_WWD, EX_WWD); 
     
-//    always @(posedge Clk) begin
-//        if(EX_isFetched) num_inst <= num_inst+1;
-//        if(EX_WWD) output_port <= to_output_port;
-//    end
+    assign output_port = EX_WWD ? to_output_port : 15'bz;
     
-    always @(EX_WWD) begin
-        if(EX_WWD) output_port <= to_output_port;
+    always @(negedge Clk) begin
+        if(EX_isFetched) begin 
+            num_inst<=num_inst+1; 
+            //$display("NUM : %d, output : %d", num_inst, output_port); 
+        end
     end
-    
-    always @(EX_isFetched) begin
-        if(EX_isFetched) num_inst<=num_inst+1;
-    end
-    
-    
-    
-    always @(num_inst) $display("num_inst : %d", num_inst);
-    always @(output_port) $display("output_port : %h", output_port);
-    
+
+    //stalling and flushing
+    wire isStalled;
     
     datapath DM(
         .clk(Clk),
@@ -96,10 +115,27 @@ module cpu(
         .MemRead(MemRead),
         .MemtoReg(MemtoReg),
         .RegWrite(RegWrite),
-        .Alucode(Alucode)
+        .Alucode(Alucode),
+        .Jump(Jump),
+        .Branch(Branch),
+        
+        .isStalled(isStalled),
+        
+        //for debugging
+        .pc_out(pc_out),
+        .IFID_inst_out(IFID_inst_out),
+        .ALU_in1(ALU_in1),
+        .ALU_in2(ALU_in2),
+        .ALU_out(ALU_out),
+        .dmem_rdata(dmem_rdata),
+        .RF_wData(RF_wData),
+        
+        .MEMWB_rdata_in(MEMWB_rdata_in),
+        .MEMWB_rdata_out(MEMWB_rdata_out)
     );
     
     control CTRL(
+        .clk(Clk),
         .inst(inst),
         .ALUsrc(ALUsrc),
         .RegDist(RegDist),
@@ -108,9 +144,13 @@ module cpu(
         .MemtoReg(MemtoReg),
         .RegWrite(RegWrite),
         .Alucode(Alucode),
+        .Jump(Jump),
+        .Branc(Branch),
         
         .isFetched(ID_isFetched),
-        .WWD(ID_WWD)
+        .WWD(ID_WWD),
+        
+        .isStalled(isStalled)
     );
     
 endmodule
@@ -122,6 +162,8 @@ endmodule
 
 
 module control(
+    input clk,
+
     input[15:0] inst,
     output ALUsrc,
     output RegDist,
@@ -130,10 +172,15 @@ module control(
     output MemtoReg,
     output RegWrite,
     output[3:0] Alucode,
+    output Jump,
+    output Branch,
         
     //for num_inst
     output isFetched,
-    output WWD
+    output WWD,
+    
+    
+    input isStalled
 );
 
     reg ALUsrc;
@@ -143,9 +190,14 @@ module control(
     reg MemtoReg;
     reg RegWrite;
     reg[3:0] Alucode;
+    reg Jump;
+    reg Branch;
+    
     
     reg isFetched;
     reg WWD;
+    
+    //always @(WWD) $display("controller : %b", WWD);
 
     wire[3:0] opcode;
     wire[5:0] ftncode;
@@ -161,20 +213,66 @@ module control(
         MemtoReg <= 0;
         RegWrite <= 0;
         Alucode <= 0;
+        Jump<=0;
+        Branch<=0;
+        
         WWD <= 0;
         isFetched <= 0;
     end
 
-    always @(inst) begin
+    always @(isStalled) begin
+        if(isStalled) begin
+            $display("STALLED!!");
+            ALUsrc <= 0;
+            RegDist <= 0;
+            MemWrite <= 0;
+            MemRead <= 0;
+            MemtoReg <= 0;
+            RegWrite <= 0;
+            Alucode <= 0;
+            Jump<=0;
+            Branch<=0;
+            
+            WWD <= 0;
+            isFetched <= 0;
+        end
+        
+    end
+    
+    always @(inst or isStalled) begin
         $display("inst at ctrl module : %h", inst);
         
-        if(opcode==4 || opcode==5 || opcode==6) begin
+        if(!isStalled) begin
+        
+        //bubble
+        if(inst==0) begin
+            $display("BUBBLE INSTUCTION!!");
+            ALUsrc <= 0;
+            RegDist <= 0;
+            MemWrite <= 0;
+            MemRead <= 0;
+            MemtoReg <= 0;
+            RegWrite <= 0;
+            Alucode <= 0;
+            Jump<=0;
+            Branch<=0;
+            
+            WWD <= 0;
+            isFetched <= 0;
+        end
+      
+        
+        else if(opcode==4 || opcode==5 || opcode==6) begin
 //            $display("ctrl : ALU I-type");
             ALUsrc <= 1;
             RegDist <= 0;
             MemWrite <= 0;
             MemRead <= 0;
+            MemtoReg <= 0;
             RegWrite <= 1;
+            Jump<=0;
+            Branch<=0;
+            
             WWD <= 0;
             isFetched <= 1;
             
@@ -204,7 +302,11 @@ module control(
             RegDist <= 1;
             MemWrite <= 0;
             MemRead <= 0;
+            MemtoReg <= 0;
             RegWrite <= 1;
+            Jump<=0;
+            Branch<=0;
+            
             WWD <= 0;
             isFetched <= 1;
             
@@ -266,9 +368,60 @@ module control(
             MemWrite <= 0;
             MemRead <= 0;
             RegWrite <= 0;
+            Jump<=0;
+            Branch<=0;
+            
             WWD <= 1;
             isFetched <= 1;
             
+        end
+        
+        //LWD
+        else if(opcode==7) begin
+        
+            $display("ctrl : LWD");
+            ALUsrc <= 1;
+            RegDist <= 0;
+            MemWrite <= 0;
+            MemRead <= 1;
+            MemtoReg <= 1;
+            RegWrite <= 1;
+            Alucode <= 4'b0000;
+            Jump<=0;
+            Branch<=0;
+            
+            WWD <= 1;
+            isFetched <= 1;
+        end
+        
+        //SWD
+        else if(opcode==8) begin
+        
+            $display("ctrl : SWD");
+            ALUsrc <= 1;
+            MemWrite <= 1;
+            MemRead <= 0;
+            RegWrite <= 0;
+            Alucode <= 4'b0000;
+            Jump<=0;
+            Branch<=0;
+            
+            WWD <= 1;
+            isFetched <= 1;
+        end
+        
+        //JMP
+        else if(opcode==9) begin
+            
+            $display("ctrl : JMP");
+            MemWrite <= 0;
+            MemRead <= 0;
+            RegWrite <= 0;
+            Jump<=1;
+            Branch<=0;
+            
+            WWD <= 1;
+            isFetched <= 1;
         end
            
         else begin
@@ -277,11 +430,16 @@ module control(
             MemWrite <= 0;
             MemRead <= 0;
             RegWrite <= 0;
+            Jump<=0;
+            Branch<=0;
+            
             WWD <= 0;
             isFetched <= 0;
             
         end
         
+    end
+    
     end
 
     initial begin
@@ -328,13 +486,45 @@ module datapath(
     input MemRead,
     input MemtoReg,
     input RegWrite,
-    input[3:0] Alucode
+    input[3:0] Alucode,
+    input Jump,
+    input Branch,
+    
+    output isStalled,
+    
+    
+    ///for debugiging
+            
+    output[15:0] pc_out,
+    output[15:0] IFID_inst_out,
+    output[15:0] ALU_in1,
+    output[15:0] ALU_in2,
+    output[15:0] ALU_out,
+    output[15:0] dmem_rdata,
+    output[15:0] RF_wData,
+    output[15:0] MEMWB_rdata_in,
+    output[15:0] MEMWB_rdata_out
+             
+    
     
 );
 
     wire[15:0] inst;
     wire[15:0] to_output_port;
-
+    
+    
+    //stalling & flushing
+    wire isStalled;
+    wire IFID_Flush;
+    wire IDEX_Flush;
+    
+    
+    
+    wire PC_enable;
+    wire IFID_enable;
+    
+    assign PC_enable = !isStalled;
+    assign IFID_enable = !isStalled;
 
 ////////////////////////////////data wires////////////////////////////////////
     
@@ -411,7 +601,9 @@ module datapath(
     
     
 //////////////////////////////control signals/////////////////////////////
-
+    
+    wire[1:0] PCsrc;
+    
     wire ID_ALUsrc;
     wire ID_RegDist;
     wire ID_MemWrite;
@@ -419,6 +611,8 @@ module datapath(
     wire ID_MemtoReg;
     wire ID_RegWrite;
     wire[3:0] ID_Alucode;
+    wire ID_Jump;
+    wire ID_Branch;
     
     wire EX_ALUsrc;
     wire EX_RegDist;
@@ -427,6 +621,7 @@ module datapath(
     wire EX_MemtoReg;
     wire EX_RegWrite;
     wire[3:0] EX_Alucode;
+    wire EX_Branch;
     
     wire[1:0] ALUsrc1;
     wire[1:0] ALUsrc2;
@@ -458,6 +653,8 @@ assign ID_MemRead = MemRead;
 assign ID_MemtoReg = MemtoReg;
 assign ID_RegWrite = RegWrite;
 assign ID_Alucode = Alucode;
+assign ID_Jump = Jump;
+assign ID_Branch = Branch;
 
 assign RF_addr1 = IFID_inst_out[11:10];
 assign RF_addr2 = IFID_inst_out[9:8];
@@ -493,7 +690,7 @@ assign EXMEM_RF_dist_in = RF_dist;
 //MEM stage
 
 assign dmem_addr = EXMEM_ALU_out;
-assign dmem_data = EXMEM_dmem_out;
+assign dmem_wdata = EXMEM_dmem_out;
 
 assign MEMWB_rdata_in = dmem_rdata;
 assign MEMWB_ALU_in = EXMEM_ALU_out;
@@ -529,7 +726,18 @@ initial begin
 end
 
 //DMEM
-//////////////////////////////////////REQUIRED////////////////////////////////////
+
+wire d_readM;
+wire d_writeM;
+wire [`WORD_SIZE-1:0] d_address; 
+wire [`WORD_SIZE-1:0] d_data;
+
+assign dmem_rdata = d_readM ? d_data : `WORD_SIZE'bz;
+assign d_data = d_writeM ? dmem_wdata : `WORD_SIZE'bz;
+assign d_address = dmem_addr;
+assign d_readM = MEM_MemRead;
+assign d_writeM = MEM_MemWrite;
+
 
 //Reg
  RegisterFile rf(.addr1(RF_addr1), 
@@ -561,6 +769,17 @@ forward FWD(
     .ALUsrc2(ALUsrc2)
 );
 
+
+//Stalling Unit
+stalling STU(
+
+    .EX_MemRead(EX_MemRead),
+    .EX_dest(EXMEM_RF_dist_in),
+    .inst(IFID_inst_out),
+    
+    .isStalled(isStalled)
+);
+
 //////////////////////////////DEBUGGING////////////////////////////////////////
 
 always @(posedge clk) begin
@@ -571,21 +790,26 @@ end
 
 always @(pc_out) $display("pc_out : %h", pc_out);
 //always @(IFID_inst_out) $display("IFID_inst_out : %h", IFID_inst_out);
-always @(ALU_in1)$display ("ALU_in1 : %h", ALU_in1);
-always @(ALU_in2)$display ("ALU_in2 : %h", ALU_in2);
-always @(ALU_out)$display ("ALU_out : %h", ALU_out);
-always @(EX_ALUsrc)$display ("EX_ALUsrc : %h", EX_ALUsrc);
-always @(ALUsrc1)$display ("ALUsrc1 : %h", ALUsrc1);
-always @(ALUsrc2)$display ("ALUsrc2 : %h", ALUsrc2);
+//always @(ALU_in1)$display ("ALU_in1 : %h", ALU_in1);
+//always @(ALU_in2)$display ("ALU_in2 : %h", ALU_in2);
+//always @(ALU_out)$display ("ALU_out : %h", ALU_out);
+//always @(EX_ALUsrc)$display ("EX_ALUsrc : %h", EX_ALUsrc);
+//always @(ALUsrc1)$display ("ALUsrc1 : %h", ALUsrc1);
+//always @(ALUsrc2)$display ("ALUsrc2 : %h", ALUsrc2);
 //always @(MEM_RegWrite)$display ("MEM_RegWrite : %b", MEM_RegWrite);
 //always @(WB_RegWrite)$display ("WB_RegWrite : %b", WB_RegWrite);
+//always @(MEMWB_rdata_in)$display ("MEMWB_rdata_in : %h (addr : %h)", MEMWB_rdata_in, dmem_addr);
+always @(MEMWB_rdata_out)$display ("MEMWB_rdata_out : %h", MEMWB_rdata_out);
+always @(RF_wData)$display ("RF_wData : %h", RF_wData);
+
+
 
 ///////////////////////////////////////////////////////
 
 
 /////////////////////////////LATCH INIT/////////////////////////////////////////
 
-latch PC(1, 0, clk, pc_in, pc_out);
+latch PC(PC_enable, 0, clk, pc_in, pc_out);
 
 reg[15:0] pc_next;
 
@@ -602,7 +826,8 @@ IFID ifid(
     
     //data signals
     .inst_in(IFID_inst_in),
-    .inst_out(IFID_inst_out)
+    .inst_out(IFID_inst_out),
+    .enable(IFID_enable)
 );
 
 
@@ -630,19 +855,21 @@ IDEX idex(
     
      .ALUsrc_in(ID_ALUsrc),
      .RegDist_in(ID_RegDist),
-     .MemWrite_in(ID_memWrite),
+     .MemWrite_in(ID_MemWrite),
      .MemRead_in(ID_MemRead),
      .MemtoReg_in(ID_MemtoReg),
      .RegWrite_in(ID_RegWrite),
      .Alucode_in(ID_Alucode),
+     .Branch_in(ID_Branch),
      
      .ALUsrc_out(EX_ALUsrc),
      .RegDist_out(EX_RegDist),
-     .MemWrite_out(EX_memWrite),
+     .MemWrite_out(EX_MemWrite),
      .MemRead_out(EX_MemRead),
      .MemtoReg_out(EX_MemtoReg),
      .RegWrite_out(EX_RegWrite),
-     .Alucode_out(EX_Alucode)
+     .Alucode_out(EX_Alucode),
+     .Branch_out(EX_Branch)
      
 );
     
@@ -663,12 +890,12 @@ EXMEM exmem(
     
     //control signals
     
-    .MemWrite_in(EX_memWrite),
+    .MemWrite_in(EX_MemWrite),
     .MemRead_in(EX_MemRead),
     .MemtoReg_in(EX_MemtoReg),
     .RegWrite_in(EX_RegWrite),
     
-    .MemWrite_out(MEM_memWrite),
+    .MemWrite_out(MEM_MemWrite),
     .MemRead_out(MEM_MemRead),
     .MemtoReg_out(MEM_MemtoReg),
     .RegWrite_out(MEM_RegWrite)
@@ -749,8 +976,8 @@ module latch(
     end
     
     always @(posedge clk) begin
-    
-        if(enable) out<=in;
+        if(flush) out<=0;
+        else if(enable) out<=in;
         else out<=out;
         
     end
@@ -774,8 +1001,8 @@ module latch2(
     end
     
     always @(posedge clk) begin
-    
-        if(enable) out<=in;
+        if(flush) out<=0;
+        else if(enable) out<=in;
         else out<=out;
         
     end
@@ -799,8 +1026,8 @@ module latch1(
     end
     
     always @(posedge clk) begin
-    
-        if(enable) out<=in;
+        if(flush) out<=0;
+        else if(enable) out<=in;
         else out<=out;
         
     end
@@ -823,8 +1050,8 @@ module latch4(
     end
     
     always @(posedge clk) begin
-    
-        if(enable) out<=in;
+        if(flush) out<=0;
+        else if(enable) out<=in;
         else out<=out;
         
     end
@@ -837,10 +1064,12 @@ module IFID(
     
     //data signals
     input[15:0] inst_in,
-    output[15:0] inst_out
+    output[15:0] inst_out,
+    
+    input enable
 );
 
-    latch inst(1, 0, clk, inst_in, inst_out); //enable, flush must be updated
+    latch inst(enable, 0, clk, inst_in, inst_out); //enable, flush must be updated
     
 endmodule
 
@@ -872,6 +1101,7 @@ module IDEX(
      input MemtoReg_in,
      input RegWrite_in,
      input[3:0] Alucode_in,
+     input Branch_in,
      
      output ALUsrc_out,
      output RegDist_out,
@@ -879,7 +1109,8 @@ module IDEX(
      output MemRead_out,
      output MemtoReg_out,
      output RegWrite_out,
-     output[3:0] Alucode_out
+     output[3:0] Alucode_out,
+     output Branch_out
      
 );
     
@@ -901,6 +1132,7 @@ module IDEX(
     latch1 MemtoReg(1, 0, clk, MemtoReg_in, MemtoReg_out);
     latch1 RegWrite(1, 0, clk, RegWrite_in, RegWrite_out);
     latch4 Alucode(1, 0, clk, Alucode_in, Alucode_out);
+    latch1 Branch(1, 0, clk, Branch_in, Branch_out);
     
     
     
@@ -1014,15 +1246,125 @@ module forward(
 
     always @(*) begin
         //$display("EX_rs : %d, MEM_dest : %d, WB_dest : %d", EX_rs, MEM_dest, WB_dest);
-        if(MEM_RegWrite && EX_rs==MEM_dest) ALUsrc1<=2'b10;
-        else if(WB_RegWrite && EX_rs==WB_dest) ALUsrc1<=2'b11;
+        if(MEM_RegWrite && EX_rs==MEM_dest) begin 
+            ALUsrc1<=2'b10;
+            $display("Forwarded : MEM -> rs");
+        end
+        
+        else if(WB_RegWrite && EX_rs==WB_dest) begin
+            ALUsrc1<=2'b11;
+            $display("Forwarded : WB -> rs");
+        end
+        
         else ALUsrc1<=2'b00;
     
-        if(MEM_RegWrite && EX_rt==MEM_dest) ALUsrc2<=2'b10;
-        else if(WB_RegWrite && EX_rt==WB_dest) ALUsrc2<=2'b11;
+        if(MEM_RegWrite && EX_rt==MEM_dest) begin
+            ALUsrc2<=2'b10;
+            $display("Forwarded : MEM -> rt");
+        end
+        
+        else if(WB_RegWrite && EX_rt==WB_dest) begin
+            ALUsrc2<=2'b11;
+            $display("Forwarded : WB -> rs");
+        end
+        
         else ALUsrc2<=2'b00;
     
     end 
 
+
+endmodule
+
+
+///////////////////////////////////////////////////////////////////////////
+/////////////////////////////STALLING UNIT/////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+
+module stalling(
+
+    input EX_MemRead,
+    input[1:0] EX_dest,
+    input[15:0] inst,
+    
+    output isStalled
+);
+
+reg isStalled;
+initial isStalled <= 0;
+
+wire[1:0] ID_rt;
+wire[1:0] ID_rs;
+wire[5:0] ftncode;
+wire[3:0] opcode;
+
+assign ID_rt = inst[9:8];
+assign ID_rs = inst[11:10];
+assign ftncode = inst[5:0];
+assign opcode = inst[15:12];
+
+wire use_rs;
+wire use_rt;
+
+assign use_rs = !(opcode==9 || opcode==10);
+assign use_rt = (opcode==15 && (ftncode==0 || ftncode==1 || ftncode==2 || ftncode==3));
+
+
+//EX stage MEM_Read, ID stage using same register
+always @(*) begin
+    
+    if(EX_MemRead && ID_rs==EX_dest && use_rs) begin
+        $display("stalled instruction : %h", inst);
+        isStalled <= 1;
+    end
+    else if(EX_MemRead && ID_rt==EX_dest && use_rt) begin
+        $display("stalled instruction : %h", inst);
+        isStalled <= 1;
+    end
+    else begin
+        isStalled <= 0;
+    end
+
+
+end
+
+endmodule
+
+
+
+///////////////////////////////////////////////////////////////////////////
+/////////////////////////////FLUSHING UNIT/////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+module flushing(
+    input Jump,
+    
+    output IFID_Flush,
+    output IDEX_Flush,
+    output PCsrc
+
+);
+
+reg IFID_Flush;
+reg IDEX_Flush;
+
+initial begin
+    IFID_Flush <= 0;
+    IDEX_Flush <= 0;
+end    
+
+always @(*) begin
+    
+    if(!Jump) begin
+        IFID_Flush <= 0;
+        IDEX_Flush <= 0;
+    end
+    
+    else if (Jump) begin
+        IFID_Flush <= 1;
+        IDEX_Flush <= 0;
+    end
+    
+end
 
 endmodule

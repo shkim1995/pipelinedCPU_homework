@@ -4,7 +4,7 @@
 `define WORD_SIZE 16	//	instead of 2^16 words to reduce memory
 			//	requirements in the Active-HDL simulator 
 
-module Memory(clk, reset_n, i_readM, i_writeM, i_address, i_data, d_readM, d_writeM, d_address, d_data);
+module Memory(clk, reset_n, i_readM, i_writeM, i_address, i_data, d_readM, d_writeM, d_address, d_data, /*debugging*/ d_outputData);
 	input clk;
 	wire clk;
 	input reset_n;
@@ -33,10 +33,12 @@ module Memory(clk, reset_n, i_readM, i_writeM, i_address, i_data, d_readM, d_wri
 	reg [`WORD_SIZE-1:0] memory [0:`MEMORY_SIZE-1];
 	reg [`WORD_SIZE-1:0] i_outputData;
 	reg [`WORD_SIZE-1:0] d_outputData;
+	/*debugging*/ output[15:0] d_outputData;
 	
 	assign i_data = i_readM?i_outputData:`WORD_SIZE'bz;
 	assign d_data = d_readM?d_outputData:`WORD_SIZE'bz;
-	
+	always @(d_outputData) 
+        $display("MEM :d_output, %h", d_outputData);
 	always@(posedge clk)
 		if(!reset_n)
 			begin
@@ -147,6 +149,7 @@ module Memory(clk, reset_n, i_readM, i_writeM, i_address, i_data, d_readM, d_wri
 				memory[16'h68] <= 16'hfc1c;
 				memory[16'h69] <= 16'hf8c7;
 				memory[16'h6a] <= 16'hfc1c;
+				
 				memory[16'h6b] <= 16'h7801;
 				memory[16'h6c] <= 16'hf01c;
 				memory[16'h6d] <= 16'h7902;
@@ -244,7 +247,11 @@ module Memory(clk, reset_n, i_readM, i_writeM, i_address, i_data, d_readM, d_wri
 			begin
 				if(i_readM)i_outputData <= memory[i_address];
 				if(i_writeM)memory[i_address] <= i_data;
-				if(d_readM)d_outputData <= memory[d_address];
+				if(d_readM) begin 
+				    $display("MEM : read, %h, %h", d_address, memory[d_address]);
+				    d_outputData <= memory[d_address];
+                   // $display("MEM : d_output %h", d_outputData);
+				 end
 				if(d_writeM)memory[d_address] <= d_data;
 			end
 endmodule
