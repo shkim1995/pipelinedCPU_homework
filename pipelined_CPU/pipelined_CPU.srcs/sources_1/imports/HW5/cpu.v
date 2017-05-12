@@ -39,9 +39,15 @@ module cpu(
         output IDEX_Flush,
         
         output[15:0] EX_inst,
+        output EX_Halt,
             
         output[15:0] jumpAddr,
-        output EX_Branch
+        output EX_Branch,
+        
+        output[15:0] out1,
+        output[15:0] out2,
+        output[15:0] out3,
+        output[15:0] out4
 );
 
     //for debugging
@@ -67,10 +73,10 @@ module cpu(
     initial begin num_inst<=0; end
     
 	// TODO : Implement your multi-cycle CPU!
-    
+    wire is_halted;
     wire [15:0] inst;
     wire ALUsrc;
-    wire RegDist;
+    wire[1:0] RegDist;
     wire MemWrite;
     wire MemRead;
     wire MemtoReg;
@@ -81,9 +87,15 @@ module cpu(
     wire Branch;
     
     wire EX_Branch;
+    wire EX_Halt;
     
     wire[15:0] EX_inst;
     
+    wire[15:0] out1;
+    wire[15:0] out2;
+    wire[15:0] out3;
+    wire[15:0] out4;   
+   
     //num_inst
     wire ID_isFetched;
     wire EX_isFetched;
@@ -93,7 +105,7 @@ module cpu(
     //WWD, num_inst logic
     
     
-    latch1 isFetched(1, 0, Clk, ID_isFetched&&!EX_Branch, EX_isFetched); 
+    latch1 isFetched(1, 0, Clk, ID_isFetched && !IDEX_Flush, EX_isFetched); 
     latch1 WWD(1, 0, Clk, ID_WWD, EX_WWD); 
     
     assign output_port = EX_WWD ? to_output_port : 15'bz;
@@ -137,6 +149,7 @@ module cpu(
         .Jump(Jump),
         .JumpR(JumpR),
         .Branch(Branch),
+        .Halt(Halt),
         
         .isStalled(isStalled),
         
@@ -149,6 +162,7 @@ module cpu(
         .RF_wData(RF_wData),
         
         .EX_inst(EX_inst),
+        .EX_Halt(EX_Halt),
         
         .MEMWB_rdata_in(MEMWB_rdata_in),
         .MEMWB_rdata_out(MEMWB_rdata_out),
@@ -157,7 +171,12 @@ module cpu(
         .pc_in(pc_in),
         .PCsrc(PCsrc),
         .IFID_Flush(IFID_Flush),
-        .IDEX_Flush(IDEX_Flush)
+        .IDEX_Flush(IDEX_Flush),
+        
+        .out1(out1),
+        .out2(out2),
+        .out3(out3),
+        .out4(out4)
     );
     
     control CTRL(
@@ -173,6 +192,7 @@ module cpu(
         .Jump(Jump),
         .JumpR(JumpR),
         .Branch(Branch),
+        .Halt(Halt),
         
         .isFetched(ID_isFetched),
         .WWD(ID_WWD),
@@ -193,7 +213,7 @@ module control(
 
     input[15:0] inst,
     output ALUsrc,
-    output RegDist,
+    output[1:0] RegDist,
     output MemWrite,
     output MemRead,
     output MemtoReg,
@@ -202,6 +222,7 @@ module control(
     output Jump,
     output JumpR,
     output Branch,
+    output Halt,
         
     //for num_inst
     output isFetched,
@@ -212,7 +233,7 @@ module control(
 );
 
     reg ALUsrc;
-    reg RegDist;
+    reg[1:0] RegDist;
     reg MemWrite;
     reg MemRead;
     reg MemtoReg;
@@ -221,7 +242,7 @@ module control(
     reg Jump;
     reg JumpR;
     reg Branch;
-       
+    reg Halt;   
     
     reg isFetched;
     reg WWD;
@@ -245,6 +266,7 @@ module control(
         Jump<=0;
         JumpR<=0;
         Branch<=0;
+        Halt<=0;
         
         WWD <= 0;
         isFetched <= 0;
@@ -263,6 +285,7 @@ module control(
             Jump<=0;
             JumpR<=0;
             Branch<=0;
+            Halt<=0;
             
             WWD <= 0;
             isFetched <= 0;
@@ -288,6 +311,7 @@ module control(
             Jump<=0;
             JumpR<=0;
             Branch<=0;
+            Halt<=0;
             
             WWD <= 0;
             isFetched <= 0;
@@ -305,6 +329,7 @@ module control(
             Jump<=0;
             JumpR<=0;
             Branch<=0;
+            Halt<=0;
             
             WWD <= 0;
             isFetched <= 1;
@@ -340,6 +365,7 @@ module control(
             Jump<=0;
             JumpR<=0;
             Branch<=0;
+            Halt<=0;
             
             WWD <= 0;
             isFetched <= 1;
@@ -405,6 +431,7 @@ module control(
             Jump<=0;
             JumpR<=0;
             Branch<=0;
+            Halt<=0;
             
             WWD <= 1;
             isFetched <= 1;
@@ -425,6 +452,7 @@ module control(
             Jump<=0;
             JumpR<=0;
             Branch<=0;
+            Halt<=0;
             
             WWD <= 1;
             isFetched <= 1;
@@ -442,6 +470,7 @@ module control(
             Jump<=0;
             JumpR<=0;
             Branch<=0;
+            Halt<=0;
             
             WWD <= 1;
             isFetched <= 1;
@@ -457,12 +486,64 @@ module control(
             Jump<=1;
             JumpR<=0;
             Branch<=0;
+            Halt<=0;
             
             WWD <= 1;
             isFetched <= 1;
         end
         
-        //Brahched
+        //JAL
+        else if(opcode==10) begin
+            
+            $display("ctrl : JAL");
+            MemWrite <= 0;
+            MemRead <= 0;
+            RegWrite <= 1;
+            Jump<=1;
+            JumpR<=0;
+            Branch<=0;
+            RegDist = 2'b10;
+            Halt<=0;
+            
+            WWD <= 1;
+            isFetched <= 1;
+        end    
+        
+        //JPR
+        else if(opcode==15 && ftncode==25) begin
+            
+            $display("ctrl : JPR");
+            MemWrite <= 0;
+            MemRead <= 0;
+            RegWrite <= 0;
+            Jump<=0;
+            JumpR<=1;
+            Branch<=0;
+            Halt<=0;
+            
+            WWD <= 1;
+            isFetched <= 1;
+        end
+        
+        
+        //JRL
+        else if(opcode==15 && ftncode==26) begin
+            
+            $display("ctrl : JRL");
+            MemWrite <= 0;
+            MemRead <= 0;
+            RegWrite <= 1;
+            Jump<=0;
+            JumpR<=1;
+            Branch<=0;
+            RegDist = 2'b10;
+            Halt<=0;
+            
+            WWD <= 1;
+            isFetched <= 1;
+        end
+        
+        //Brahches
         else if(opcode==0 || opcode==1 || opcode==2 || opcode==3) begin
         
             $display("ctrl : Branches");
@@ -474,6 +555,7 @@ module control(
             Jump<=0;
             JumpR<=0;
             Branch<=1;
+            Halt<=0;
                     
             WWD <= 1;
             isFetched <= 1;
@@ -485,8 +567,10 @@ module control(
 
         end
         
+        //HLT
         else if(opcode==15 && ftncode == 29) begin
-            $display("!!!!!!!!!!HALTED!!!!!!!!!!!!!!");
+            Halt<=1;
+            
         
         end
         
@@ -499,6 +583,7 @@ module control(
             Jump<=0;
             JumpR<=0;
             Branch<=0;
+            Halt<=0;
             
             WWD <= 0;
             isFetched <= 0;
@@ -548,7 +633,7 @@ module datapath(
     //for control unit
     output[15:0] inst,
     input ALUsrc,
-    input RegDist,
+    input[1:0] RegDist,
     input MemWrite,
     input MemRead,
     input MemtoReg,
@@ -557,6 +642,7 @@ module datapath(
     input Jump,
     input JumpR,
     input Branch,
+    input Halt,
     
     output EX_Branch_hit,
     
@@ -580,16 +666,22 @@ module datapath(
     output IFID_Flush,
     output IDEX_Flush,
     
+    output EX_Halt,
     
-    output[15:0] EX_inst
+    
+    output[15:0] EX_inst,
              
     
+    output[15:0] out1,
+    output[15:0] out2,
+    output[15:0] out3,
+    output[15:0] out4
     
 );
 
     wire[15:0] inst;
     wire[15:0] to_output_port;
-    
+    wire is_halted;
     
     //stalling & flushing
     wire isStalled;
@@ -616,6 +708,13 @@ module datapath(
     wire EX_Branch_hit;
     assign EX_Branch_hit = EX_Branch && ALU_out[0];
     
+    
+    //RF debugging
+            
+    wire[15:0] out1;
+    wire[15:0] out2;
+    wire[15:0] out3;
+    wire[15:0] out4;
     
 ////////////////////////////////data wires////////////////////////////////////
     
@@ -666,19 +765,19 @@ module datapath(
     wire[15:0] ALU_in1;
     wire[15:0] ALU_in2;
     wire[15:0] ALU_out;
-    wire[15:0] RF_dist;
+    wire[1:0] RF_dist;
     
     //target address should be added//
     
     wire[15:0] EXMEM_ALU_in;
     wire[15:0] EXMEM_dmem_in;
-    wire[15:0] EXMEM_RF_dist_in;
+    wire[1:0] EXMEM_RF_dist_in;
     
     
     //MEM stage
     wire[15:0] EXMEM_ALU_out;
     wire[15:0] EXMEM_dmem_out;
-    wire[15:0] EXMEM_RF_dist_out;
+    wire[1:0] EXMEM_RF_dist_out;
     
     wire[15:0] dmem_addr;
     wire[15:0] dmem_wdata;
@@ -686,12 +785,12 @@ module datapath(
     
     wire[15:0] MEMWB_rdata_in;
     wire[15:0] MEMWB_ALU_in;
-    wire[15:0] MEMWB_RF_dist_in;
+    wire[1:0] MEMWB_RF_dist_in;
     
     //WB stage
     wire[15:0] MEMWB_rdata_out;
     wire[15:0] MEMWB_ALU_out;
-    wire[15:0] MEMWB_RF_dist_out;
+    wire[1:0] MEMWB_RF_dist_out;
     
     
     
@@ -700,7 +799,7 @@ module datapath(
     wire[1:0] PCsrc;
     
     wire ID_ALUsrc;
-    wire ID_RegDist;
+    wire[1:0] ID_RegDist;
     wire ID_MemWrite;
     wire ID_MemRead;
     wire ID_MemtoReg;
@@ -709,16 +808,19 @@ module datapath(
     wire ID_Jump;
     wire ID_JumpR;
     wire ID_Branch;
+    wire ID_Halt;
     
     wire EX_ALUsrc;
-    wire EX_RegDist;
+    wire[1:0] EX_RegDist;
     wire EX_MemWrite;
     wire EX_MemRead;
     wire EX_MemtoReg;
     wire EX_RegWrite;
     wire[3:0] EX_Alucode;
+    wire EX_Jump;
     wire EX_JumpR;
     wire EX_Branch;
+    wire EX_Halt;
     
     wire[1:0] ALUsrc1;
     wire[1:0] ALUsrc2;
@@ -753,6 +855,7 @@ assign ID_Alucode = Alucode;
 assign ID_Jump = Jump;
 assign ID_JumpR = JumpR;
 assign ID_Branch = Branch;
+assign ID_Halt = Halt;
 
 assign RF_addr1 = IFID_inst_out[11:10];
 assign RF_addr2 = IFID_inst_out[9:8];
@@ -776,10 +879,15 @@ assign temp = (ALUsrc2 == 2'b00) ? IDEX_val2_out :
                  (ALUsrc2 == 2'b10) ? EXMEM_ALU_out :
                  RF_wData;
 assign ALU_in2 = EX_ALUsrc ? IDEX_SE_out : temp;
-assign RF_dist = EX_RegDist ? IDEX_rd_out : IDEX_rt_out;
+//assign RF_dist = EX_RegDist==2'b01 ? IDEX_rd_out : 
+//                IDEX_rt_out;
+
+assign RF_dist = EX_RegDist==2'b01 ? IDEX_rd_out : 
+                 EX_RegDist==2'b00 ? IDEX_rt_out :  
+                 2;
 assign to_output_port = ALU_in1;
 
-assign EXMEM_ALU_in = ALU_out;
+assign EXMEM_ALU_in = (EX_Jump || EX_JumpR) ? (EX_pc+1) : ALU_out;
 assign EXMEM_dmem_in = IDEX_val2_out;
 assign EXMEM_RF_dist_in = RF_dist;
 
@@ -846,7 +954,11 @@ assign d_writeM = MEM_MemWrite;
                  .clock(clk),
                  .reset_n(reset_n), 
                  .data1(RF_val1), 
-                 .data2(RF_val2)
+                 .data2(RF_val2),
+                 .out1(out1),
+                 .out2(out2),
+                 .out3(out3),
+                 .out4(out4)
 );
 
 //Sign Extension
@@ -882,6 +994,7 @@ stalling STU(
 flushing FLU(
     .Jump(ID_Jump),
     .Branch(EX_Branch && ALU_out[0]),
+    .JumpR(EX_JumpR),
     
     .IFID_Flush(IFID_Flush),
     .IDEX_Flush(IDEX_Flush),
@@ -896,7 +1009,7 @@ targetAddress TAU(
     .ID_pc(ID_pc),
     .EX_pc(EX_pc),
     .offset(IDEX_SE_out),
-    
+    .ALU_in1(ALU_in1),
     .ID_Jump(ID_Jump),
     .EX_JumpR(EX_JumpR),
     .EX_Branch(EX_Branch && ALU_out[0]),
@@ -906,14 +1019,23 @@ targetAddress TAU(
     .branchAddr(branchAddr)
 );
 
+
+//Halt Module
+halt HTU(
+    .EX_Halt(EX_Halt),
+    .clk(clk),
+    
+    .is_halted(is_halted)
+);
+
 //////////////////////////////DEBUGGING////////////////////////////////////////
 
 always @(posedge clk) begin
     $display("");
     $display("-----------------------------------");
     $display("");
-        $display("%h", EX_pc);
-        $display("%h", ID_pc);
+        $display("ID_HALT %b", ID_Halt);
+        $display("EX_HALT%h", EX_Halt);
 end
 
 always @(pc_out) $display("pc_out : %h", pc_out);
@@ -992,8 +1114,10 @@ IDEX idex(
      .MemtoReg_in(ID_MemtoReg),
      .RegWrite_in(ID_RegWrite),
      .Alucode_in(ID_Alucode),
+     .Jump_in(ID_Jump),
      .JumpR_in(ID_JumpR),
      .Branch_in(ID_Branch),
+     .Halt_in(ID_Halt),
      
      .ALUsrc_out(EX_ALUsrc),
      .RegDist_out(EX_RegDist),
@@ -1002,8 +1126,10 @@ IDEX idex(
      .MemtoReg_out(EX_MemtoReg),
      .RegWrite_out(EX_RegWrite),
      .Alucode_out(EX_Alucode),
+     .Jump_out(EX_Jump),
      .JumpR_out(EX_JumpR),
-     .Branch_out(EX_Branch)
+     .Branch_out(EX_Branch),
+     .Halt_out(EX_Halt)
      
 );
     
@@ -1249,24 +1375,28 @@ module IDEX(
     //control signals
     
      input ALUsrc_in,
-     input RegDist_in,
+     input[1:0] RegDist_in,
      input MemWrite_in,
      input MemRead_in,
      input MemtoReg_in,
      input RegWrite_in,
      input[3:0] Alucode_in,
+     input Jump_in,
      input JumpR_in,
      input Branch_in,
+     input Halt_in,
      
      output ALUsrc_out,
-     output RegDist_out,
+     output[1:0] RegDist_out,
      output MemWrite_out,
      output MemRead_out,
      output MemtoReg_out,
      output RegWrite_out,
      output[3:0] Alucode_out,
+     output Jump_out,
      output JumpR_out,
-     output Branch_out
+     output Branch_out,
+     output Halt_out
      
 );
     latch pc(1, flush, clk, pc_in, pc_out);
@@ -1284,14 +1414,16 @@ module IDEX(
     //control signals
     
     latch1 ALUsrc(1, flush, clk, ALUsrc_in, ALUsrc_out);
-    latch1 RegDist(1, flush, clk, RegDist_in, RegDist_out);
+    latch2 RegDist(1, flush, clk, RegDist_in, RegDist_out);
     latch1 MemWrite(1, flush, clk, MemWrite_in, MemWrite_out);
     latch1 MemRead(1, flush, clk, MemRead_in, MemRead_out);
     latch1 MemtoReg(1, flush, clk, MemtoReg_in, MemtoReg_out);
     latch1 RegWrite(1, flush, clk, RegWrite_in, RegWrite_out);
     latch4 Alucode(1, flush, clk, Alucode_in, Alucode_out);
     latch1 JumpR(1, flush, clk, JumpR_in, JumpR_out);
+    latch1 Jump(1, flush, clk, Jump_in, Jump_out);
     latch1 Branch(1, flush, clk, Branch_in, Branch_out);
+    latch1 Halt(1, flush, clk, Halt_in, Halt_out);
     
     
     
@@ -1533,7 +1665,9 @@ always @(*) begin
     end
        
     else if (JumpR) begin
-        
+        IFID_Flush <= 1;
+        IDEX_Flush <= 1;
+        PCsrc <= 2'b10;
     end
     
     else if (Jump) begin
@@ -1566,6 +1700,8 @@ module targetAddress(
     input[15:0] ID_pc,
     input[15:0] EX_pc,
     input[15:0] offset,
+    input[15:0] ALU_in1,
+    
     input ID_Jump,
     input EX_JumpR,
     input EX_Branch,
@@ -1582,12 +1718,12 @@ reg[15:0] branchAddr;
 always @(*) begin
 
     if(EX_Branch) begin
-        $display("EX_BRANCH : %h, %h", EX_pc, offset);
         branchAddr = EX_pc + offset + 1;
     end
     
+    //JAR, JLR
     else if(EX_JumpR) begin
-            
+        jumpRAddr =  ALU_in1;  
     end
     
     //JMP , JAL
@@ -1597,6 +1733,51 @@ always @(*) begin
     end
     
     
+    
+end
+
+endmodule
+
+
+///////////////////////////////////////////////////////////////////////////
+////////////////////////////////HALT Unit//////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+
+module halt(
+    input EX_Halt,
+    input clk,
+    
+    output is_halted
+);
+
+reg[1:0] timing;
+reg halted;
+
+reg is_halted;
+
+initial begin
+    halted <= 0;
+    timing <= 0;
+    is_halted <= 0;
+
+end
+
+always@(EX_Halt) begin
+
+    if(EX_Halt) begin
+        timing <= 3;
+        halted <= 1;
+    end
+
+end
+
+always @(clk) begin
+
+    if(halted==1) begin
+        if(timing==0) is_halted <= 1;
+        else timing <= timing-1;
+    end
     
 end
 

@@ -34,7 +34,7 @@ module cpu_TB();
     //wire[15:0] ALU_in1;
     //wire[15:0] ALU_in2;
     //wire[15:0] ALU_out;
-    //wire[15:0] RF_wData;
+    wire[15:0] RF_wData;
     //wire[15:0] d_outputData;
     //wire[15:0] MEMWB_rdata_in;
     //wire[15:0] MEMWB_rdata_out;
@@ -45,8 +45,14 @@ module cpu_TB();
     wire IFID_Flush;
     wire IDEX_Flush;
     wire EX_Branch_hit;
+    wire EX_Halt;
     
     wire[15:0] EX_inst;
+    
+    wire[15:0] out1;
+    wire[15:0] out2;
+    wire[15:0] out3;
+    wire[15:0] out4;
     
    
 	cpu UUT (.Clk(clk), 
@@ -68,7 +74,7 @@ module cpu_TB();
             //.ALU_in1(ALU_in1),
             //.ALU_in2(ALU_in2),
             //.ALU_out(ALU_out),
-            //.RF_wData(RF_wData),
+            .RF_wData(RF_wData),
             //.MEMWB_rdata_in(MEMWB_rdata_in),
             //.MEMWB_rdata_out(MEMWB_rdata_out),
             .EX_Branch(EX_Branch),
@@ -78,7 +84,13 @@ module cpu_TB();
             .IFID_Flush(IFID_Flush),
             .IDEX_Flush(IDEX_Flush),
             
-            .EX_inst(EX_inst)
+            .EX_inst(EX_inst),
+            .EX_Halt(EX_Halt),
+            
+            .out1(out1),
+            .out2(out2),
+            .out3(out3),
+            .out4(out4)
 	);
 	
 	

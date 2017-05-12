@@ -202,6 +202,7 @@ module Memory(clk, reset_n, i_readM, i_writeM, i_address, i_data, d_readM, d_wri
 				memory[16'h9b] <= 16'h909d;
 				memory[16'h9c] <= 16'hf01d;
 				memory[16'h9d] <= 16'hf41c;
+				
 				memory[16'h9e] <= 16'ha0af;
 				memory[16'h9f] <= 16'hf01c;
 				memory[16'ha0] <= 16'ha0ae;
@@ -212,16 +213,18 @@ module Memory(clk, reset_n, i_readM, i_writeM, i_address, i_data, d_readM, d_wri
 				memory[16'ha5] <= 16'h6000;
 				memory[16'ha6] <= 16'h4005;
 				memory[16'ha7] <= 16'ha0b2;
-				memory[16'ha8] <= 16'hf01c;
-				memory[16'ha9] <= 16'h90b1;
-				memory[16'haa] <= 16'h4900;
-				memory[16'hab] <= 16'hf41a;
-				memory[16'hac] <= 16'hf01c;
+				memory[16'ha8] <= 16'hf01c; //WWD 19-3
+				
+				memory[16'ha9] <= 16'h90b1; //JMP PREFIB1
+				memory[16'haa] <= 16'h4900; // ADI
+				memory[16'hab] <= 16'hf41a; // JRL
+				memory[16'hac] <= 16'hf01c; //WWD 20
 				memory[16'had] <= 16'hf01d;
 				memory[16'hae] <= 16'h4a01;
-				memory[16'haf] <= 16'hf819;
+				memory[16'haf] <= 16'hf819;//
 				memory[16'hb0] <= 16'hf01d;
 				memory[16'hb1] <= 16'ha0aa;
+				
 				memory[16'hb2] <= 16'h41ff;
 				memory[16'hb3] <= 16'h2404;
 				memory[16'hb4] <= 16'h6000;

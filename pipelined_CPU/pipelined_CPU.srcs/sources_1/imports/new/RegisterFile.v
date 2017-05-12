@@ -29,13 +29,31 @@ module RegisterFile(
     input clock,
     input reset_n,
     output [15:0] data1,
-    output [15:0] data2
+    output [15:0] data2,
+    
+    
+    //debugging
+    output[15:0] out1,
+    output[15:0] out2,
+    output[15:0] out3,
+    output[15:0] out4
     );
     
     parameter num = 4;
     
     reg[num-1:0] writeReg;
+    
     wire[15:0] outs[num-1:0];
+    
+    wire[15:0] out1;
+    wire[15:0] out2;
+    wire[15:0] out3;
+    wire[15:0] out4;
+        
+    assign out1 = outs[0];
+    assign out2 = outs[1];
+    assign out3 = outs[2];
+    assign out4 = outs[3];
     
     integer i;
         
