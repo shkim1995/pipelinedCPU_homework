@@ -30,10 +30,18 @@ module cpu(
         output[15:0] ALU_in1,
         output[15:0] ALU_in2,
         output[15:0] ALU_out,
-        output[15:0] dmem_rdata,
         output[15:0] RF_wData,
         output[15:0] MEMWB_rdata_in,
-        output[15:0] MEMWB_rdata_out
+        output[15:0] MEMWB_rdata_out,
+        output[15:0] pc_in,
+        output[1:0] PCsrc,
+        output IFID_Flush,
+        output IDEX_Flush,
+        
+        output[15:0] EX_inst,
+            
+        output[15:0] jumpAddr,
+        output EX_Branch
 );
 
     //for debugging
@@ -42,10 +50,16 @@ module cpu(
     wire[15:0] ALU_in1;
     wire[15:0] ALU_in2;
     wire[15:0] ALU_out;
-    wire[15:0] dmem_rdata;
     wire[15:0] RF_wData;
     wire[15:0] MEMWB_rdata_in;
     wire[15:0] MEMWB_rdata_out;
+    
+    wire[15:0] jumpAddr;
+    
+    wire[15:0] pc_in;
+    wire[1:0] PCsrc;
+    wire IFID_Flush;
+    wire IDEX_Flush;
 
     reg[`WORD_SIZE-1:0] num_inst;
     wire[`WORD_SIZE-1:0] output_port;
@@ -63,7 +77,12 @@ module cpu(
     wire RegWrite;
     wire[3:0] Alucode;
     wire Jump;
+    wire JumpR;
     wire Branch;
+    
+    wire EX_Branch;
+    
+    wire[15:0] EX_inst;
     
     //num_inst
     wire ID_isFetched;
@@ -73,15 +92,14 @@ module cpu(
     
     //WWD, num_inst logic
     
-    initial num_inst <= 1;
     
-    latch1 isFetched(1, 0, Clk, ID_isFetched, EX_isFetched); 
+    latch1 isFetched(1, 0, Clk, ID_isFetched&&!EX_Branch, EX_isFetched); 
     latch1 WWD(1, 0, Clk, ID_WWD, EX_WWD); 
     
     assign output_port = EX_WWD ? to_output_port : 15'bz;
     
     always @(negedge Clk) begin
-        if(EX_isFetched) begin 
+        if(EX_isFetched /*&&!EX_Branch*/) begin 
             num_inst<=num_inst+1; 
             //$display("NUM : %d, output : %d", num_inst, output_port); 
         end
@@ -117,6 +135,7 @@ module cpu(
         .RegWrite(RegWrite),
         .Alucode(Alucode),
         .Jump(Jump),
+        .JumpR(JumpR),
         .Branch(Branch),
         
         .isStalled(isStalled),
@@ -127,11 +146,18 @@ module cpu(
         .ALU_in1(ALU_in1),
         .ALU_in2(ALU_in2),
         .ALU_out(ALU_out),
-        .dmem_rdata(dmem_rdata),
         .RF_wData(RF_wData),
         
+        .EX_inst(EX_inst),
+        
         .MEMWB_rdata_in(MEMWB_rdata_in),
-        .MEMWB_rdata_out(MEMWB_rdata_out)
+        .MEMWB_rdata_out(MEMWB_rdata_out),
+        .jumpAddr(jumpAddr),
+        .EX_Branch_hit(EX_Branch),
+        .pc_in(pc_in),
+        .PCsrc(PCsrc),
+        .IFID_Flush(IFID_Flush),
+        .IDEX_Flush(IDEX_Flush)
     );
     
     control CTRL(
@@ -145,7 +171,8 @@ module cpu(
         .RegWrite(RegWrite),
         .Alucode(Alucode),
         .Jump(Jump),
-        .Branc(Branch),
+        .JumpR(JumpR),
+        .Branch(Branch),
         
         .isFetched(ID_isFetched),
         .WWD(ID_WWD),
@@ -173,6 +200,7 @@ module control(
     output RegWrite,
     output[3:0] Alucode,
     output Jump,
+    output JumpR,
     output Branch,
         
     //for num_inst
@@ -191,8 +219,9 @@ module control(
     reg RegWrite;
     reg[3:0] Alucode;
     reg Jump;
+    reg JumpR;
     reg Branch;
-    
+       
     
     reg isFetched;
     reg WWD;
@@ -214,6 +243,7 @@ module control(
         RegWrite <= 0;
         Alucode <= 0;
         Jump<=0;
+        JumpR<=0;
         Branch<=0;
         
         WWD <= 0;
@@ -231,6 +261,7 @@ module control(
             RegWrite <= 0;
             Alucode <= 0;
             Jump<=0;
+            JumpR<=0;
             Branch<=0;
             
             WWD <= 0;
@@ -255,6 +286,7 @@ module control(
             RegWrite <= 0;
             Alucode <= 0;
             Jump<=0;
+            JumpR<=0;
             Branch<=0;
             
             WWD <= 0;
@@ -271,6 +303,7 @@ module control(
             MemtoReg <= 0;
             RegWrite <= 1;
             Jump<=0;
+            JumpR<=0;
             Branch<=0;
             
             WWD <= 0;
@@ -305,6 +338,7 @@ module control(
             MemtoReg <= 0;
             RegWrite <= 1;
             Jump<=0;
+            JumpR<=0;
             Branch<=0;
             
             WWD <= 0;
@@ -369,6 +403,7 @@ module control(
             MemRead <= 0;
             RegWrite <= 0;
             Jump<=0;
+            JumpR<=0;
             Branch<=0;
             
             WWD <= 1;
@@ -388,6 +423,7 @@ module control(
             RegWrite <= 1;
             Alucode <= 4'b0000;
             Jump<=0;
+            JumpR<=0;
             Branch<=0;
             
             WWD <= 1;
@@ -404,6 +440,7 @@ module control(
             RegWrite <= 0;
             Alucode <= 4'b0000;
             Jump<=0;
+            JumpR<=0;
             Branch<=0;
             
             WWD <= 1;
@@ -418,12 +455,41 @@ module control(
             MemRead <= 0;
             RegWrite <= 0;
             Jump<=1;
+            JumpR<=0;
             Branch<=0;
             
             WWD <= 1;
             isFetched <= 1;
         end
-           
+        
+        //Brahched
+        else if(opcode==0 || opcode==1 || opcode==2 || opcode==3) begin
+        
+            $display("ctrl : Branches");
+        
+            ALUsrc <= 0;
+            MemWrite <= 0;
+            MemRead <= 0;
+            RegWrite <= 0;
+            Jump<=0;
+            JumpR<=0;
+            Branch<=1;
+                    
+            WWD <= 1;
+            isFetched <= 1;
+            
+            if(opcode==0) Alucode <= 4'b0011; 
+            if(opcode==1) Alucode <= 4'b0101; 
+            if(opcode==2) Alucode <= 4'b1100; 
+            if(opcode==3) Alucode <= 4'b1111; 
+
+        end
+        
+        else if(opcode==15 && ftncode == 29) begin
+            $display("!!!!!!!!!!HALTED!!!!!!!!!!!!!!");
+        
+        end
+        
         else begin
             $display("ctrl : nothing!");
            
@@ -431,6 +497,7 @@ module control(
             MemRead <= 0;
             RegWrite <= 0;
             Jump<=0;
+            JumpR<=0;
             Branch<=0;
             
             WWD <= 0;
@@ -488,7 +555,10 @@ module datapath(
     input RegWrite,
     input[3:0] Alucode,
     input Jump,
+    input JumpR,
     input Branch,
+    
+    output EX_Branch_hit,
     
     output isStalled,
     
@@ -500,10 +570,18 @@ module datapath(
     output[15:0] ALU_in1,
     output[15:0] ALU_in2,
     output[15:0] ALU_out,
-    output[15:0] dmem_rdata,
     output[15:0] RF_wData,
     output[15:0] MEMWB_rdata_in,
-    output[15:0] MEMWB_rdata_out
+    output[15:0] MEMWB_rdata_out,
+    
+    output[15:0] jumpAddr,
+    output[15:0] pc_in,
+    output[1:0] PCsrc,
+    output IFID_Flush,
+    output IDEX_Flush,
+    
+    
+    output[15:0] EX_inst
              
     
     
@@ -518,6 +596,7 @@ module datapath(
     wire IFID_Flush;
     wire IDEX_Flush;
     
+    wire[15:0] EX_inst;
     
     
     wire PC_enable;
@@ -525,7 +604,19 @@ module datapath(
     
     assign PC_enable = !isStalled;
     assign IFID_enable = !isStalled;
-
+    
+    
+    //Jump & Branch Addr
+    
+    
+    wire[15:0] jumpAddr;
+    wire[15:0] branchAddr;
+    wire[15:0] jumpRAddr;
+    
+    wire EX_Branch_hit;
+    assign EX_Branch_hit = EX_Branch && ALU_out[0];
+    
+    
 ////////////////////////////////data wires////////////////////////////////////
     
     
@@ -540,6 +631,8 @@ module datapath(
     
     
     //ID stage
+    wire[15:0] ID_pc;
+    
     wire[15:0] IFID_inst_out;
     
     wire[1:0] RF_addr1;
@@ -561,6 +654,8 @@ module datapath(
     
     
     //EX stage
+    wire[15:0] EX_pc;
+    
     wire[15:0] IDEX_val1_out;
     wire[15:0] IDEX_val2_out;
     wire[15:0] IDEX_SE_out;
@@ -612,6 +707,7 @@ module datapath(
     wire ID_RegWrite;
     wire[3:0] ID_Alucode;
     wire ID_Jump;
+    wire ID_JumpR;
     wire ID_Branch;
     
     wire EX_ALUsrc;
@@ -621,6 +717,7 @@ module datapath(
     wire EX_MemtoReg;
     wire EX_RegWrite;
     wire[3:0] EX_Alucode;
+    wire EX_JumpR;
     wire EX_Branch;
     
     wire[1:0] ALUsrc1;
@@ -654,6 +751,7 @@ assign ID_MemtoReg = MemtoReg;
 assign ID_RegWrite = RegWrite;
 assign ID_Alucode = Alucode;
 assign ID_Jump = Jump;
+assign ID_JumpR = JumpR;
 assign ID_Branch = Branch;
 
 assign RF_addr1 = IFID_inst_out[11:10];
@@ -776,8 +874,36 @@ stalling STU(
     .EX_MemRead(EX_MemRead),
     .EX_dest(EXMEM_RF_dist_in),
     .inst(IFID_inst_out),
-    
     .isStalled(isStalled)
+);
+
+
+//Flushing Unit
+flushing FLU(
+    .Jump(ID_Jump),
+    .Branch(EX_Branch && ALU_out[0]),
+    
+    .IFID_Flush(IFID_Flush),
+    .IDEX_Flush(IDEX_Flush),
+    .PCsrc(PCsrc)
+);
+
+
+//TargetAddr Unit
+targetAddress TAU(
+
+    .inst(IFID_inst_out),
+    .ID_pc(ID_pc),
+    .EX_pc(EX_pc),
+    .offset(IDEX_SE_out),
+    
+    .ID_Jump(ID_Jump),
+    .EX_JumpR(EX_JumpR),
+    .EX_Branch(EX_Branch && ALU_out[0]),
+    
+    .jumpAddr(jumpAddr),
+    .jumpRAddr(jumpRAddr),
+    .branchAddr(branchAddr)
 );
 
 //////////////////////////////DEBUGGING////////////////////////////////////////
@@ -786,21 +912,11 @@ always @(posedge clk) begin
     $display("");
     $display("-----------------------------------");
     $display("");
+        $display("%h", EX_pc);
+        $display("%h", ID_pc);
 end
 
 always @(pc_out) $display("pc_out : %h", pc_out);
-//always @(IFID_inst_out) $display("IFID_inst_out : %h", IFID_inst_out);
-//always @(ALU_in1)$display ("ALU_in1 : %h", ALU_in1);
-//always @(ALU_in2)$display ("ALU_in2 : %h", ALU_in2);
-//always @(ALU_out)$display ("ALU_out : %h", ALU_out);
-//always @(EX_ALUsrc)$display ("EX_ALUsrc : %h", EX_ALUsrc);
-//always @(ALUsrc1)$display ("ALUsrc1 : %h", ALUsrc1);
-//always @(ALUsrc2)$display ("ALUsrc2 : %h", ALUsrc2);
-//always @(MEM_RegWrite)$display ("MEM_RegWrite : %b", MEM_RegWrite);
-//always @(WB_RegWrite)$display ("WB_RegWrite : %b", WB_RegWrite);
-//always @(MEMWB_rdata_in)$display ("MEMWB_rdata_in : %h (addr : %h)", MEMWB_rdata_in, dmem_addr);
-always @(MEMWB_rdata_out)$display ("MEMWB_rdata_out : %h", MEMWB_rdata_out);
-always @(RF_wData)$display ("RF_wData : %h", RF_wData);
 
 
 
@@ -814,16 +930,23 @@ latch PC(PC_enable, 0, clk, pc_in, pc_out);
 reg[15:0] pc_next;
 
 initial begin
-    pc_next<=16'h22;
+    pc_next<=-1;
 end
 
-always @(pc_out) pc_next = pc_next + 1;
+always @(pc_out) pc_next = pc_in + 1;
 
-assign pc_in = pc_next;
+assign pc_in = PCsrc==2'b00 ? pc_next :
+               PCsrc==2'b01 ? jumpAddr :
+               PCsrc==2'b10 ? jumpRAddr :
+               branchAddr;
 
 IFID ifid(
+    //pc
+    .pc_in(pc_out),
+    .pc_out(ID_pc),
+
     .clk(clk),
-    
+    .flush(IFID_Flush),
     //data signals
     .inst_in(IFID_inst_in),
     .inst_out(IFID_inst_out),
@@ -833,6 +956,15 @@ IFID ifid(
 
 IDEX idex(
     .clk(clk),
+    .flush(IDEX_Flush),
+    
+    //pc
+    .pc_in(ID_pc),
+    .pc_out(EX_pc),
+    
+    //instruction debugging
+    .inst_in(IFID_inst_out),
+    .inst_out(EX_inst),
     
     //data signals
     
@@ -860,6 +992,7 @@ IDEX idex(
      .MemtoReg_in(ID_MemtoReg),
      .RegWrite_in(ID_RegWrite),
      .Alucode_in(ID_Alucode),
+     .JumpR_in(ID_JumpR),
      .Branch_in(ID_Branch),
      
      .ALUsrc_out(EX_ALUsrc),
@@ -869,6 +1002,7 @@ IDEX idex(
      .MemtoReg_out(EX_MemtoReg),
      .RegWrite_out(EX_RegWrite),
      .Alucode_out(EX_Alucode),
+     .JumpR_out(EX_JumpR),
      .Branch_out(EX_Branch)
      
 );
@@ -1000,6 +1134,7 @@ module latch2(
         out <= 2'bx;
     end
     
+        
     always @(posedge clk) begin
         if(flush) out<=0;
         else if(enable) out<=in;
@@ -1049,6 +1184,7 @@ module latch4(
         out <= 4'bx;
     end
     
+    
     always @(posedge clk) begin
         if(flush) out<=0;
         else if(enable) out<=in;
@@ -1062,19 +1198,37 @@ endmodule
 module IFID(
     input clk,
     
+    //pc
+    input[15:0] pc_in,
+    output[15:0] pc_out,
+    
     //data signals
     input[15:0] inst_in,
     output[15:0] inst_out,
     
-    input enable
+    input enable,
+    input flush
 );
 
-    latch inst(enable, 0, clk, inst_in, inst_out); //enable, flush must be updated
+    latch inst(enable, flush, clk, inst_in, inst_out);
+    latch pc(enable, flush, clk, pc_in, pc_out);
     
 endmodule
 
 module IDEX(
     input clk,
+    
+    input flush,
+    
+    //pc
+    
+    input[15:0] pc_in,
+    output[15:0] pc_out,
+    
+    //instruction debugging
+    input[15:0] inst_in,
+    output[15:0] inst_out,
+    
     
     //data signals
     
@@ -1101,6 +1255,7 @@ module IDEX(
      input MemtoReg_in,
      input RegWrite_in,
      input[3:0] Alucode_in,
+     input JumpR_in,
      input Branch_in,
      
      output ALUsrc_out,
@@ -1110,29 +1265,33 @@ module IDEX(
      output MemtoReg_out,
      output RegWrite_out,
      output[3:0] Alucode_out,
+     output JumpR_out,
      output Branch_out
      
 );
+    latch pc(1, flush, clk, pc_in, pc_out);
+    latch inst(1, flush, clk, inst_in, inst_out);
     
     //data signals
     
-    latch val1(1, 0, clk, val1_in, val1_out); 
-    latch val2(1, 0, clk, val2_in, val2_out); 
-    latch SE(1, 0, clk, SE_in, SE_out); 
-    latch2 rt(1, 0, clk, rt_in, rt_out); 
-    latch2 rd(1, 0, clk, rd_in, rd_out); 
-    latch2 rs(1, 0, clk, rs_in, rs_out); 
+    latch val1(1, flush, clk, val1_in, val1_out); 
+    latch val2(1, flush, clk, val2_in, val2_out); 
+    latch SE(1, flush, clk, SE_in, SE_out); 
+    latch2 rt(1, flush, clk, rt_in, rt_out); 
+    latch2 rd(1, flush, clk, rd_in, rd_out); 
+    latch2 rs(1, flush, clk, rs_in, rs_out); 
     
     //control signals
     
-    latch1 ALUsrc(1, 0, clk, ALUsrc_in, ALUsrc_out);
-    latch1 RegDist(1, 0, clk, RegDist_in, RegDist_out);
-    latch1 MemWrite(1, 0, clk, MemWrite_in, MemWrite_out);
-    latch1 MemRead(1, 0, clk, MemRead_in, MemRead_out);
-    latch1 MemtoReg(1, 0, clk, MemtoReg_in, MemtoReg_out);
-    latch1 RegWrite(1, 0, clk, RegWrite_in, RegWrite_out);
-    latch4 Alucode(1, 0, clk, Alucode_in, Alucode_out);
-    latch1 Branch(1, 0, clk, Branch_in, Branch_out);
+    latch1 ALUsrc(1, flush, clk, ALUsrc_in, ALUsrc_out);
+    latch1 RegDist(1, flush, clk, RegDist_in, RegDist_out);
+    latch1 MemWrite(1, flush, clk, MemWrite_in, MemWrite_out);
+    latch1 MemRead(1, flush, clk, MemRead_in, MemRead_out);
+    latch1 MemtoReg(1, flush, clk, MemtoReg_in, MemtoReg_out);
+    latch1 RegWrite(1, flush, clk, RegWrite_in, RegWrite_out);
+    latch4 Alucode(1, flush, clk, Alucode_in, Alucode_out);
+    latch1 JumpR(1, flush, clk, JumpR_in, JumpR_out);
+    latch1 Branch(1, flush, clk, Branch_in, Branch_out);
     
     
     
@@ -1321,6 +1480,13 @@ always @(*) begin
         $display("stalled instruction : %h", inst);
         isStalled <= 1;
     end
+    
+//    //Branch -> Jump
+//    else if(ID_Branch && (opcode==9 || opcode==10)) begin
+//        $display("BRANCH JUMP stalled instruction : %h", inst);
+//        isStalled <= 1;
+//    end
+    
     else begin
         isStalled <= 0;
     end
@@ -1338,32 +1504,99 @@ endmodule
 
 module flushing(
     input Jump,
+    input JumpR,
+    input Branch,
     
     output IFID_Flush,
     output IDEX_Flush,
-    output PCsrc
+    output[1:0] PCsrc
 
 );
 
 reg IFID_Flush;
 reg IDEX_Flush;
+reg[1:0] PCsrc;
 
 initial begin
     IFID_Flush <= 0;
     IDEX_Flush <= 0;
+    PCsrc <= 2'b00;
 end    
 
 always @(*) begin
     
-    if(!Jump) begin
-        IFID_Flush <= 0;
-        IDEX_Flush <= 0;
+    
+    if(Branch) begin
+        IFID_Flush <= 1;
+        IDEX_Flush <= 1;
+        PCsrc <= 2'b11;
+    end
+       
+    else if (JumpR) begin
+        
     end
     
     else if (Jump) begin
         IFID_Flush <= 1;
         IDEX_Flush <= 0;
+        PCsrc <= 2'b01;
     end
+    
+    else begin
+        IFID_Flush <= 0;
+        IDEX_Flush <= 0;
+        PCsrc <= 2'b00;
+    end    
+        
+    
+end
+
+endmodule
+
+
+
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////Target Address Unit/////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+
+module targetAddress(
+
+    input[15:0] inst,
+    input[15:0] ID_pc,
+    input[15:0] EX_pc,
+    input[15:0] offset,
+    input ID_Jump,
+    input EX_JumpR,
+    input EX_Branch,
+    output[15:0] jumpAddr,
+    output[15:0] jumpRAddr,
+    output[15:0] branchAddr
+);
+
+reg[15:0] jumpAddr;
+reg[15:0] jumpRAddr;
+reg[15:0] branchAddr;
+
+
+always @(*) begin
+
+    if(EX_Branch) begin
+        $display("EX_BRANCH : %h, %h", EX_pc, offset);
+        branchAddr = EX_pc + offset + 1;
+    end
+    
+    else if(EX_JumpR) begin
+            
+    end
+    
+    //JMP , JAL
+    else if(ID_Jump) begin
+        jumpAddr[15:12] <= ID_pc[15:12];
+        jumpAddr[11:0] <= inst[11:0];
+    end
+    
+    
     
 end
 

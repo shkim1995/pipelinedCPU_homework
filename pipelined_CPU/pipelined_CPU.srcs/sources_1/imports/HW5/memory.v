@@ -164,7 +164,8 @@ module Memory(clk, reset_n, i_readM, i_writeM, i_address, i_data, d_readM, d_wri
 				memory[16'h76] <= 16'hf01c;
 				memory[16'h77] <= 16'h9079;
 				memory[16'h78] <= 16'hf01d;
-				memory[16'h79] <= 16'hf41c;
+				memory[16'h79] <= 16'hf41c;//JMP1
+				
 				memory[16'h7a] <= 16'hb01;
 				memory[16'h7b] <= 16'h907d;
 				memory[16'h7c] <= 16'hf01d;

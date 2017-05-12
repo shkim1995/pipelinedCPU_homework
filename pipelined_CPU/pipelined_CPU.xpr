@@ -29,7 +29,7 @@
     <Option Name="EnableBDX" Val="FALSE"/>
     <Option Name="DSABoardId" Val="ac701"/>
     <Option Name="DSANumComputeUnits" Val="16"/>
-    <Option Name="WTXSimLaunchSim" Val="95"/>
+    <Option Name="WTXSimLaunchSim" Val="144"/>
     <Option Name="WTModelSimLaunchSim" Val="0"/>
     <Option Name="WTQuestaLaunchSim" Val="0"/>
     <Option Name="WTIesLaunchSim" Val="0"/>
@@ -61,19 +61,19 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/new/RegisterFile.v">
+      <File Path="$PSRCDIR/sources_1/imports/new/ALU.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../HW3_singleCycle/HW3_singleCycle.srcs/sources_1/new/RegisterFile.v"/>
-          <Attr Name="ImportTime" Val="1493029559"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../HW3_singleCycle/HW3_singleCycle.srcs/sources_1/new/ALU.v"/>
+          <Attr Name="ImportTime" Val="1493029672"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/new/ALU.v">
+      <File Path="$PSRCDIR/sources_1/imports/new/RegisterFile.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../HW3_singleCycle/HW3_singleCycle.srcs/sources_1/new/ALU.v"/>
-          <Attr Name="ImportTime" Val="1493029672"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../HW3_singleCycle/HW3_singleCycle.srcs/sources_1/new/RegisterFile.v"/>
+          <Attr Name="ImportTime" Val="1493029559"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -138,7 +138,7 @@
         <Option Name="TransportPathDelay" Val="0"/>
         <Option Name="TransportIntDelay" Val="0"/>
         <Option Name="SrcSet" Val="sources_1"/>
-        <Option Name="xsim.simulate.runtime" Val="12000ns"/>
+        <Option Name="xsim.simulate.runtime" Val="15000ns"/>
       </Config>
     </FileSet>
   </FileSets>

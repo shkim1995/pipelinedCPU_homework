@@ -31,14 +31,22 @@ module cpu_TB();
     
     wire[15:0] pc_out;
     wire[15:0] IFID_inst_out;
-    wire[15:0] ALU_in1;
-    wire[15:0] ALU_in2;
-    wire[15:0] ALU_out;
-    wire[15:0] dmem_rdata;
-    wire[15:0] RF_wData;
-    wire[15:0] d_outputData;
-    wire[15:0] MEMWB_rdata_in;
-    wire[15:0] MEMWB_rdata_out;
+    //wire[15:0] ALU_in1;
+    //wire[15:0] ALU_in2;
+    //wire[15:0] ALU_out;
+    //wire[15:0] RF_wData;
+    //wire[15:0] d_outputData;
+    //wire[15:0] MEMWB_rdata_in;
+    //wire[15:0] MEMWB_rdata_out;
+    wire[15:0] jumpAddr;
+    wire EX_Branch;
+    wire[15:0] pc_in;
+    wire[1:0] PCsrc;
+    wire IFID_Flush;
+    wire IDEX_Flush;
+    wire EX_Branch_hit;
+    
+    wire[15:0] EX_inst;
     
    
 	cpu UUT (.Clk(clk), 
@@ -57,13 +65,20 @@ module cpu_TB();
 	//for debugging
             .pc_out(pc_out),
             .IFID_inst_out(IFID_inst_out),
-            .ALU_in1(ALU_in1),
-            .ALU_in2(ALU_in2),
-            .ALU_out(ALU_out),
-            .dmem_rdata(dmem_rdata),
-            .RF_wData(RF_wData),
-            .MEMWB_rdata_in(MEMWB_rdata_in),
-            .MEMWB_rdata_out(MEMWB_rdata_out)
+            //.ALU_in1(ALU_in1),
+            //.ALU_in2(ALU_in2),
+            //.ALU_out(ALU_out),
+            //.RF_wData(RF_wData),
+            //.MEMWB_rdata_in(MEMWB_rdata_in),
+            //.MEMWB_rdata_out(MEMWB_rdata_out),
+            .EX_Branch(EX_Branch),
+            .jumpAddr(jumpAddr),
+            .pc_in(pc_in),
+            .PCsrc(PCsrc),
+            .IFID_Flush(IFID_Flush),
+            .IDEX_Flush(IDEX_Flush),
+            
+            .EX_inst(EX_inst)
 	);
 	
 	
