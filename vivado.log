@@ -1011,3 +1011,7 @@ $finish called at time : 348850 ns : File "/home/steven/Desktop/Architecture/cpu
 INFO: [USF-XSim-96] XSim completed. Design snapshot 'cpu_tb_behav' loaded.
 INFO: [USF-XSim-97] XSim simulation ran for 1000000ns
 launch_simulation: Time (s): cpu = 00:00:03 ; elapsed = 00:00:07 . Memory (MB): peak = 5943.598 ; gain = 0.004 ; free physical = 865 ; free virtual = 12256
+close_sim
+INFO: [Simtcl 6-16] Simulation closed
+exit
+INFO: [Common 17-206] Exiting Vivado at Sun May 14 12:49:21 2017...

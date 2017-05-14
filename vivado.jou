@@ -20,3 +20,4 @@ source cpu_tb.tcl
 close_sim
 launch_simulation
 source cpu_tb.tcl
+close_sim

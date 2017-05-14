@@ -3,10 +3,14 @@
 Jan 23 2017
 19:19:20
 /home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.sim/sim_1/behav/glbl.v,1485222234,verilog,,,,glbl,,,,,,,,
-/home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sim_1/imports/HW5/cpu_TB.v,1494612908,verilog,,,,cpu_TB,,,,,,,,
-/home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sources_1/imports/HW5/cpu.v,1494613987,verilog,,,/home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sources_1/imports/HW5/opcodes.v,EXMEM;IDEX;IFID;MEMWB;control;cpu;datapath;flushing;forward;halt;latch;latch1;latch2;latch4;signExtension;stalling;targetAddress,,,,,,,,
-/home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sources_1/imports/HW5/memory.v,1494609019,verilog,,,,Memory,,,,,,,,
+/home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sim_1/imports/HW5/cpu_TB.v,1494736776,verilog,,,,cpu_TB,,,,,,,,
+/home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sources_1/imports/HW5/cpu.v,1494736725,verilog,,,/home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sources_1/imports/HW5/opcodes.v,brenchPred;btb;btbLine;cpu,,,,,,,,
+/home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sources_1/imports/HW5/memory.v,1494736318,verilog,,,,Memory,,,,,,,,
 /home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sources_1/imports/HW5/opcodes.v,1491916486,verilog,,,,,,,,,,,,
 /home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sources_1/imports/new/ALU.v,1494347050,verilog,,,,ALU,,,,,,,,
 /home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sources_1/imports/new/Register.v,1494346012,verilog,,,,Register,,,,,,,,
-/home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sources_1/imports/new/RegisterFile.v,1494612575,verilog,,,,RegisterFile,,,,,,,,
+/home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sources_1/imports/new/RegisterFile.v,1494650587,verilog,,,,RegisterFile,,,,,,,,
+/home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sources_1/new/control.v,1494651286,verilog,,,,control,,,,,,,,
+/home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sources_1/new/datapath.v,1494739520,verilog,,,,datapath,,,,,,,,
+/home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sources_1/new/latches.v,1494729715,verilog,,,,EXMEM;IDEX;IFID;MEMWB;latch;latch1;latch2;latch4,,,,,,,,
+/home/steven/Desktop/vivado/HW5_pipeline/pipelined_CPU/pipelined_CPU.srcs/sources_1/new/modules.v,1494739826,verilog,,,,flushing;forward;halt;signExtension;stalling;targetAddress,,,,,,,,

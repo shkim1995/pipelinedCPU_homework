@@ -170,7 +170,7 @@ module Memory(clk, reset_n, i_readM, i_writeM, i_address, i_data, d_readM, d_wri
 				memory[16'h7b] <= 16'h907d;
 				memory[16'h7c] <= 16'hf01d;
 				memory[16'h7d] <= 16'hf01c;
-				memory[16'h7e] <= 16'h601;
+				memory[16'h7e] <= 16'h601; //
 				memory[16'h7f] <= 16'hf01d;
 				memory[16'h80] <= 16'hf41c;
 				memory[16'h81] <= 16'h1601;
@@ -226,7 +226,7 @@ module Memory(clk, reset_n, i_readM, i_writeM, i_address, i_data, d_readM, d_wri
 				memory[16'hb1] <= 16'ha0aa;
 				
 				memory[16'hb2] <= 16'h41ff;
-				memory[16'hb3] <= 16'h2404;
+				memory[16'hb3] <= 16'h2404; // BGZ
 				memory[16'hb4] <= 16'h6000;
 				memory[16'hb5] <= 16'h5001;
 				memory[16'hb6] <= 16'hf819;

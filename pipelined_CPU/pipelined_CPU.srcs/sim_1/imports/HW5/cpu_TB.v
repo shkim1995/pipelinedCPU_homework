@@ -29,30 +29,36 @@ module cpu_TB();
 
     //for debugging
     
+
     wire[15:0] pc_out;
-    wire[15:0] IFID_inst_out;
-    //wire[15:0] ALU_in1;
-    //wire[15:0] ALU_in2;
-    //wire[15:0] ALU_out;
-    wire[15:0] RF_wData;
-    //wire[15:0] d_outputData;
-    //wire[15:0] MEMWB_rdata_in;
-    //wire[15:0] MEMWB_rdata_out;
-    wire[15:0] jumpAddr;
-    wire EX_Branch;
+    wire[15:0] pc_next;
     wire[15:0] pc_in;
+    
+                
+    wire[15:0] ID_pc;
+    wire[15:0] ID_pc_pred;
+    wire[15:0] EX_pc;
+    wire[15:0] EX_pc_pred;
+    
+    wire[15:0] jumpAddr;
+    wire[15:0] branchAddr;
+    
+
+    wire jumpPred;
+    wire branchPred;
+    wire branchMissPred;
+    
+    wire EX_Branch;
+    wire b_cond;
     wire[1:0] PCsrc;
-    wire IFID_Flush;
-    wire IDEX_Flush;
-    wire EX_Branch_hit;
-    wire EX_Halt;
     
-    wire[15:0] EX_inst;
     
-    wire[15:0] out1;
-    wire[15:0] out2;
-    wire[15:0] out3;
-    wire[15:0] out4;
+//    //for BTB testing
+//    wire valid;
+//    wire[7:0] tag;
+//    wire[15:0] addr;
+    
+    
     
    
 	cpu UUT (.Clk(clk), 
@@ -68,29 +74,35 @@ module cpu_TB();
 	         .num_inst(num_inst), 
 	         .output_port(output_port), 
 	         .is_halted(is_halted),
-	//for debugging
-            .pc_out(pc_out),
-            .IFID_inst_out(IFID_inst_out),
-            //.ALU_in1(ALU_in1),
-            //.ALU_in2(ALU_in2),
-            //.ALU_out(ALU_out),
-            .RF_wData(RF_wData),
-            //.MEMWB_rdata_in(MEMWB_rdata_in),
-            //.MEMWB_rdata_out(MEMWB_rdata_out),
-            .EX_Branch(EX_Branch),
-            .jumpAddr(jumpAddr),
-            .pc_in(pc_in),
-            .PCsrc(PCsrc),
-            .IFID_Flush(IFID_Flush),
-            .IDEX_Flush(IDEX_Flush),
+             
+             //debugging
+             
+             .pc_out(pc_out),
+             .pc_next(pc_next),
+             .pc_in(pc_in),
+             
+             .ID_pc(ID_pc),
+             .ID_pc_pred(ID_pc_pred),
+             .EX_pc(EX_pc),
+             .EX_pc_pred(EX_pc_pred),
+             
+             .jumpAddr(jumpAddr),
+             .branchAddr(branchAddr),
+             
+     
+             .jumpPred(jumpPred),
+             .branchPred(branchPred),
+             .branchMissPred(branchMissPred),
+             
+             .EX_Branch(EX_Branch),
+             .b_cond(b_cond),
+             .PCsrc(PCsrc)
+             
+//             //for BTB testing
+//             .valid(valid),
+//             .tag(tag),
+//             .addr(addr)
             
-            .EX_inst(EX_inst),
-            .EX_Halt(EX_Halt),
-            
-            .out1(out1),
-            .out2(out2),
-            .out3(out3),
-            .out4(out4)
 	);
 	
 	
