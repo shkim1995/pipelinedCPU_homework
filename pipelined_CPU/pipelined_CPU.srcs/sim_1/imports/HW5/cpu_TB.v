@@ -51,6 +51,10 @@ module cpu_TB();
     wire EX_Branch;
     wire b_cond;
     wire[1:0] PCsrc;
+//    wire[7:0] BHSR;
+//    wire valid;
+//    wire[7:0] tag;
+//    wire[7:0] pc_tag;
     
     
 //    //for BTB testing
@@ -97,6 +101,10 @@ module cpu_TB();
              .EX_Branch(EX_Branch),
              .b_cond(b_cond),
              .PCsrc(PCsrc)
+//             .BHSR(BHSR),
+//             .valid(valid),
+//             .tag(tag),
+//             .pc_tag(pc_tag)
              
 //             //for BTB testing
 //             .valid(valid),

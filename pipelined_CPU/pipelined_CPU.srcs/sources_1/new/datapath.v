@@ -66,6 +66,12 @@ module datapath(
     output EX_Branch,
     output[1:0] PCsrc
     
+//    output[7:0] BHSR,
+//    output valid,
+//    output[7:0] tag,
+//    output[7:0] pc_tag
+
+    
     
     
 //    //for BTB test
@@ -312,11 +318,25 @@ wire update;
 wire[15:0] pc_update;
 wire[15:0] target_addr;
 
+wire bhsr_update;
+wire bhsr_input;
+
+always @(bhsr_update) $display("BHSR_UPDATE : %b", bhsr_update);
+always @(bhsr_input) $display("BHSR_INPUT : %b", bhsr_input);
+
+
 //debugging
 wire jumpPred;
 wire branchPred;
 wire branchMissPred;
 wire b_cond;
+
+
+wire[7:0] BHSR;
+wire valid;
+wire[7:0] tag;
+wire[7:0] pc_tag;
+
 assign b_cond = ALU_out[0];
 
 brenchPred BRD(
@@ -330,7 +350,16 @@ brenchPred BRD(
     .pc_update(pc_update),
     .target_addr(target_addr),
     
+    //BHSR update
+    .bhsr_update(bhsr_update),
+    .bhsr_input(bhsr_input),
+    
     .pc_pred(pc_pred)
+    
+//    .BHSR(BHSR),
+//    .valid(valid),
+//    .tag(tag),
+//    .pc_tag(pc_tag)
 );
 
 assign pc_in = PCsrc==2'b00 ? pc_pred :
@@ -434,6 +463,10 @@ flushing FLU(
     .update(update),
     .pc_update(pc_update),
     .target_addr(target_addr),
+    
+//    //BHSR update
+//    .bhsr_update(bhsr_update),
+//    .bhsr_input(bhsr_input),
     
     .IFID_Flush(IFID_Flush),
     .IDEX_Flush(IDEX_Flush),

@@ -161,6 +161,11 @@ module flushing(
     output[15:0] pc_update,
     output[15:0] target_addr,
     
+//    //for BHSR update
+//    output bhsr_update,
+//    output bhsr_input,
+    
+    
     //debugging
     output jumpPred,
     output branchPred,
@@ -173,6 +178,8 @@ reg IDEX_Flush;
 reg[1:0] PCsrc;
 
 
+//for BTB update
+
 reg update;
 reg[15:0] pc_update;
 reg[15:0] target_addr;
@@ -183,6 +190,17 @@ initial begin
     target_addr<=0;
 end
 
+////for BHSR update
+
+//wire bhsr_input;
+//assign bhsr_input = b_cond;
+
+//wire bhsr_update;
+//assign bhsr_update = Branch;
+
+
+//prediction conditions
+
 wire jumpMissPred;
 assign jumpMissPred = Jump && (jumpAddr!=ID_pc_pred);
 
@@ -190,14 +208,15 @@ wire branchMissPred;
 assign branchMissPred = Branch &&
        !(((b_cond) && (EX_pc_pred == branchAddr)) || ((!b_cond) && (EX_pc_pred == (EX_pc+1))));
 
+//debugging
 wire branchPred;
 assign branchPred = Branch &&
        (((b_cond) && (EX_pc_pred == branchAddr)) || ((!b_cond) && (EX_pc_pred == (EX_pc+1))));
 
 //debugging
 wire jumpPred;
-
 assign jumpPred = Jump && (jumpAddr==ID_pc_pred);
+
 
 initial begin
     IFID_Flush <= 0;
@@ -205,22 +224,15 @@ initial begin
     PCsrc <= 2'b00;
 end    
 
+
 always @(branchMissPred or JumpR or jumpMissPred) begin
-    
-    
-    
+        
     if(branchMissPred) begin
-        //if(b_cond)begin
+        
         IFID_Flush <= 1;
         IDEX_Flush <= 1;
         PCsrc <= 2'b11;
-        //end
         
-//        else begin
-//            IFID_Flush <= 0;
-//            IDEX_Flush <= 0;
-//            PCsrc <= 2'b00;        
-//        end
         //BTB update
         if(b_cond) begin
             update<=1;

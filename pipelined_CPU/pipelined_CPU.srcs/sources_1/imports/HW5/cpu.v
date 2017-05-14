@@ -44,7 +44,12 @@ module cpu(
        
        output EX_Branch,
        output b_cond,
-       output[1:0] PCsrc
+       output[1:0] PCsrc,
+       
+       output[7:0] BHSR,
+       output valid,
+       output[7:0] tag,
+       output[7:0] pc_tag
         
 //        //for BTB test
 //        output valid,
@@ -108,6 +113,11 @@ module cpu(
     wire EX_Branch;
     wire b_cond;
     wire[1:0] PCsrc;
+    
+    wire[7:0] BHSR;
+    wire valid;
+    wire[7:0] tag;
+    wire[7:0] pc_tag;
     
     //WWD, num_inst logic
     
@@ -186,6 +196,10 @@ module cpu(
         .b_cond(b_cond),
         .EX_Branch(EX_Branch),
         .PCsrc(PCsrc)
+//        .BHSR(BHSR),
+//        .valid(valid),
+//        .tag(tag),
+//        .pc_tag(pc_tag)
         
 //        //for BTB testing
 //        .valid(valid),
@@ -229,10 +243,22 @@ module brenchPred(
     input[15:0] pc_update,
     input[15:0] target_addr,
     
+    //BHSR update
+    input bhsr_update,
+    input bhsr_input,
+    
     output[15:0] pc_pred
     
+//    //debugging
+//    output[7:0] BHSR,
+//    output valid,
+//    output[7:0] tag,
+//    output[7:0] pc_tag
+    
 );
-
+    
+    integer i;
+    
     reg[15:0] pc_pred;
     initial pc_pred<=0;
     
@@ -240,11 +266,32 @@ module brenchPred(
     wire[7:0] tag;
     wire[15:0] addr;
     
+//    //bhsr
+//    reg[7:0] BHSR;
+    
+//    initial begin
+//        for(i=0; i<8; i=i+1) begin
+//            BHSR[i] <= 0;
+//        end
+//    end
+    
+//    always @(negedge clk) begin
+    
+//        if(bhsr_update) begin
+//            for(i=8; i>=1; i=i-1) BHSR[i] = BHSR[i-1];
+//            BHSR[0] = bhsr_input;
+            
+//        end
+    
+//    end
+    
+    
     btb BTB(
     
         //read input
         .clk(clk),
         .pc(pc),
+//        .BHSR(BHSR),
         
         //write input
         .update(update),
@@ -260,6 +307,7 @@ module brenchPred(
     wire[7:0] pc_tag;
     assign pc_tag = pc[15:8];
     
+    //hit : pc<=addr from BTB, miss : pc<=pc+1(pc_next)
     always@(pc or pc_next or valid or tag or addr) begin
         if(valid && pc_tag==tag) pc_pred <= addr;
         else pc_pred <= pc_next;
@@ -273,6 +321,7 @@ module btb(
     //read input
     input clk,
     input[15:0] pc,
+//    input[7:0] BHSR,
     
     //write input
     input update,
@@ -333,7 +382,7 @@ module btb(
     wire[7:0] pc_idx;
     wire[7:0] pc_update_idx;
     
-    assign pc_idx = pc[7:0];
+    assign pc_idx = pc[7:0]; // XOR
     assign pc_update_idx = pc_update[7:0];
     
     always @(pc) begin
