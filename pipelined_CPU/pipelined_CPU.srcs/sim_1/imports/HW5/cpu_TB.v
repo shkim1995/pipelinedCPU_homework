@@ -51,6 +51,12 @@ module cpu_TB();
     wire EX_Branch;
     wire b_cond;
     wire[1:0] PCsrc;
+    wire pred;
+    wire taken;
+    
+    wire bht_update;
+    wire [15:0]pc_update;
+    
 //    wire[7:0] BHSR;
 //    wire valid;
 //    wire[7:0] tag;
@@ -100,8 +106,14 @@ module cpu_TB();
              
              .EX_Branch(EX_Branch),
              .b_cond(b_cond),
-             .PCsrc(PCsrc)
-//             .BHSR(BHSR),
+             .PCsrc(PCsrc),
+             
+             .pred(pred),
+             .taken(taken),
+     
+             .bht_update(bht_update),
+             .pc_update(pc_update)
+//             .BHSR(BHSR)
 //             .valid(valid),
 //             .tag(tag),
 //             .pc_tag(pc_tag)

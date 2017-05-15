@@ -161,6 +161,9 @@ module flushing(
     output[15:0] pc_update,
     output[15:0] target_addr,
     
+    output bht_update,
+    output taken,
+    
 //    //for BHSR update
 //    output bhsr_update,
 //    output bhsr_input,
@@ -190,7 +193,33 @@ initial begin
     target_addr<=0;
 end
 
-////for BHSR update
+
+reg taken;
+//assign taken = b_cond || Jump;
+
+reg bht_update;
+//assign bht_update = Branch || Jump;
+
+always @(Branch or Jump or b_cond) begin
+    
+    if(Branch) begin
+        pc_update <= EX_pc;
+        taken <= b_cond;
+        bht_update <= 1;
+    end
+    
+    else if(Jump) begin
+        pc_update <= ID_pc;
+        taken <= 1;
+        bht_update <= 1;
+    end
+    
+    else begin
+        taken <= 1'bz;
+        bht_update <= 0;
+    end
+
+end
 
 //wire bhsr_input;
 //assign bhsr_input = b_cond;

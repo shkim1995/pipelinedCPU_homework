@@ -64,20 +64,15 @@ module datapath(
     output branchMissPred,
     output b_cond,
     output EX_Branch,
-    output[1:0] PCsrc
+    output[1:0] PCsrc,
     
-//    output[7:0] BHSR,
-//    output valid,
-//    output[7:0] tag,
-//    output[7:0] pc_tag
+    output pred,
+    output taken,
+    output bht_update,
+    output [15:0] pc_update,
+   
+    output[7:0] BHSR
 
-    
-    
-    
-//    //for BTB test
-//    output valid,
-//    output[7:0] tag,
-//    output[15:0] addr
     
 );
 
@@ -318,11 +313,14 @@ wire update;
 wire[15:0] pc_update;
 wire[15:0] target_addr;
 
-wire bhsr_update;
-wire bhsr_input;
+wire bht_update;
+wire taken;
 
-always @(bhsr_update) $display("BHSR_UPDATE : %b", bhsr_update);
-always @(bhsr_input) $display("BHSR_INPUT : %b", bhsr_input);
+//wire bhsr_update;
+//wire bhsr_input;
+
+//always @(bhsr_update) $display("BHSR_UPDATE : %b", bhsr_update);
+//always @(bhsr_input) $display("BHSR_INPUT : %b", bhsr_input);
 
 
 //debugging
@@ -336,6 +334,7 @@ wire[7:0] BHSR;
 wire valid;
 wire[7:0] tag;
 wire[7:0] pc_tag;
+wire pred;
 
 assign b_cond = ALU_out[0];
 
@@ -350,13 +349,17 @@ brenchPred BRD(
     .pc_update(pc_update),
     .target_addr(target_addr),
     
-    //BHSR update
-    .bhsr_update(bhsr_update),
-    .bhsr_input(bhsr_input),
+    .bht_update(bht_update),
+    .taken(taken),
+    
+//    //BHSR update
+//    .bhsr_update(bhsr_update),
+//    .bhsr_input(bhsr_input),
+    .pred(pred),
     
     .pc_pred(pc_pred)
     
-//    .BHSR(BHSR),
+//    .BHSR(BHSR)
 //    .valid(valid),
 //    .tag(tag),
 //    .pc_tag(pc_tag)
@@ -463,6 +466,9 @@ flushing FLU(
     .update(update),
     .pc_update(pc_update),
     .target_addr(target_addr),
+    
+    .bht_update(bht_update),
+    .taken(taken),
     
 //    //BHSR update
 //    .bhsr_update(bhsr_update),
@@ -658,29 +664,6 @@ MEMWB memwb(
      
 );
 
-////BTB
-
-////for BTB test
-//wire valid;
-//wire[7:0] tag;
-//wire[15:0] addr;
-
-//btb BTB(
-
-//    //read input
-//    .clk(clk),
-//    .pc(pc_out),
-    
-//    //write input
-////    input update,
-////    input[15:0] pc_update,
-////    input[15:0] target_addr,
-    
-//    //read output
-//    .valid(valid),
-//    .tag(tag),
-//    .addr(addr)
-//);
 
 
 endmodule

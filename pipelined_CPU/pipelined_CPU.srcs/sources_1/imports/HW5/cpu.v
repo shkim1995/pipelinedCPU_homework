@@ -49,7 +49,11 @@ module cpu(
        output[7:0] BHSR,
        output valid,
        output[7:0] tag,
-       output[7:0] pc_tag
+       output[7:0] pc_tag,
+       output pred,
+       output taken,
+       output bht_update,
+       output[15:0] pc_update
         
 //        //for BTB test
 //        output valid,
@@ -118,6 +122,11 @@ module cpu(
     wire valid;
     wire[7:0] tag;
     wire[7:0] pc_tag;
+    wire pred;
+    wire taken;
+    
+    wire bht_update;
+    wire[15:0] pc_update;
     
     //WWD, num_inst logic
     
@@ -136,10 +145,6 @@ module cpu(
     //stalling and flushing
     wire isStalled;
     
-//    //for BTB testing
-//    wire valid;
-//    wire[7:0] tag;
-//    wire[15:0] addr;
     
     datapath DM(
         .clk(Clk),
@@ -195,16 +200,14 @@ module cpu(
         .branchMissPred(branchMissPred),
         .b_cond(b_cond),
         .EX_Branch(EX_Branch),
-        .PCsrc(PCsrc)
-//        .BHSR(BHSR),
-//        .valid(valid),
-//        .tag(tag),
-//        .pc_tag(pc_tag)
+        .PCsrc(PCsrc),
+        .BHSR(BHSR),
+        .pred(pred),
+        .taken(taken),
         
-//        //for BTB testing
-//        .valid(valid),
-//        .tag(tag),
-//        .addr(addr)
+        .bht_update(bht_update),
+        .pc_update(pc_update)
+
         
     );
     
@@ -230,220 +233,3 @@ module cpu(
     );
     
 endmodule
-
-
-module brenchPred(
-    //read input
-    input clk,
-    input[15:0] pc,
-    input[15:0] pc_next, //pc+1
-    
-    //write input
-    input update,
-    input[15:0] pc_update,
-    input[15:0] target_addr,
-    
-    //BHSR update
-    input bhsr_update,
-    input bhsr_input,
-    
-    output[15:0] pc_pred
-    
-//    //debugging
-//    output[7:0] BHSR,
-//    output valid,
-//    output[7:0] tag,
-//    output[7:0] pc_tag
-    
-);
-    
-    integer i;
-    
-    reg[15:0] pc_pred;
-    initial pc_pred<=0;
-    
-    wire valid;
-    wire[7:0] tag;
-    wire[15:0] addr;
-    
-//    //bhsr
-//    reg[7:0] BHSR;
-    
-//    initial begin
-//        for(i=0; i<8; i=i+1) begin
-//            BHSR[i] <= 0;
-//        end
-//    end
-    
-//    always @(negedge clk) begin
-    
-//        if(bhsr_update) begin
-//            for(i=8; i>=1; i=i-1) BHSR[i] = BHSR[i-1];
-//            BHSR[0] = bhsr_input;
-            
-//        end
-    
-//    end
-    
-    
-    btb BTB(
-    
-        //read input
-        .clk(clk),
-        .pc(pc),
-//        .BHSR(BHSR),
-        
-        //write input
-        .update(update),
-        .pc_update(pc_update),
-        .target_addr(target_addr),
-        
-        //read output
-        .valid(valid),
-        .tag(tag),
-        .addr(addr)
-    );
-    
-    wire[7:0] pc_tag;
-    assign pc_tag = pc[15:8];
-    
-    //hit : pc<=addr from BTB, miss : pc<=pc+1(pc_next)
-    always@(pc or pc_next or valid or tag or addr) begin
-        if(valid && pc_tag==tag) pc_pred <= addr;
-        else pc_pred <= pc_next;
-    end
-
-endmodule
-    
-
-module btb(
-
-    //read input
-    input clk,
-    input[15:0] pc,
-//    input[7:0] BHSR,
-    
-    //write input
-    input update,
-    input[15:0] pc_update,
-    input[15:0] target_addr,
-    
-    //read output
-    output valid,
-    output[7:0] tag,
-    output[15:0] addr
-);
-
-    
-    integer i;
-    
-//    //debugging
-//    reg[15:0] debug[15:0];
-//    initial begin
-//        for(i=0; i<16; i=i+1) begin
-//            debug[i]=i;
-        
-//        end
-//    end
-    
-    //outputs
-    
-    reg valid;
-    reg[7:0] tag;
-    reg[15:0] addr;
-    
-    initial begin
-        valid <= 0;
-        tag <= 0;
-        addr <= 0;
-    end
-    
-    
-    //line initiation
-    
-    reg updates[255:0];
-    initial begin
-        for(i=0; i<256; i=i+1) updates[i] <= 0;
-    end
-    
-    wire valids[255:0];
-    wire[7:0] tags[255:0];
-    wire[15:0] addrs[255:0];
-    
-    generate
-        genvar k;
-        for(k=0; k<255; k=k+1) begin : dff
-            btbLine lines(clk, update && updates[k], pc_update, target_addr, valids[k], tags[k], addrs[k]);
-            
-        end
-    endgenerate
-    
-    
-    wire[7:0] pc_idx;
-    wire[7:0] pc_update_idx;
-    
-    assign pc_idx = pc[7:0]; // XOR
-    assign pc_update_idx = pc_update[7:0];
-    
-    always @(pc) begin
-        valid = valids[pc_idx];
-        tag = tags[pc_idx];
-        addr = addrs[pc_idx];
-        
-    end
-    
-    always @(pc_update_idx) begin
-        
-        for(i=0; i<256; i=i+1) begin
-            updates[i] <= 0;
-        end
-        
-        updates[pc_update_idx] <= 1;
-        
-    end
-    
-
-endmodule
-
-
-
-module btbLine(
-    input clk,      
-    input update,
-    input[15:0] pc_update,
-    input[15:0] target_addr,
-
-    output valid,
-    output[7:0] tag,
-    output[15:0] addr
-    
-);
-
-    reg valid;
-    reg[7:0] tag;
-    reg[15:0] addr;
-
-    initial begin
-    
-        valid<=0;
-        tag<=0;
-        addr<=0;
-    
-    end
-    
-//    always@(debug) addr<=debug;
-    
-    //update at every clk
-    
-    always @(posedge clk) begin
-        
-        if(update) begin
-            valid <= 1;
-            tag <= pc_update[15:8];
-            addr <= target_addr;
-        end
-        
-    end
-
-endmodule
-    
